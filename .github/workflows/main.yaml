@@ -68,7 +68,7 @@ jobs:
           RESOURCE: .nais/topics/events-dev.yaml
 
   deploy-application-dev:
-    needs: deploy-kafka-dev
+    needs: [build, deploy-kafka-dev]
     runs-on: ubuntu-latest
     permissions:
       contents: read
