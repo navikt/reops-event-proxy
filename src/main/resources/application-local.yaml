@@ -1,0 +1,17 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9094
+    topic: test2
+
+server:
+  port: 8082
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    no.nav.reops: TRACE
+    org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
+    reactor.netty.http.client: DEBUG
+    org.apache.kafka.clients.NetworkClient: WARN
+    org.apache.kafka.clients.Metadata: WARN

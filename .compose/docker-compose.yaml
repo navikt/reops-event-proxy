@@ -1,0 +1,201 @@
+services:
+  # -- Kafka controller --
+  controller-1:
+    image: docker.io/apache/kafka:4.1.1
+    container_name: kafka-controller-1
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 20s
+    environment:
+      KAFKA_CLUSTER_ID: "01916ec2-824f-77b4-a3c2-c1ccfd480449"
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: controller
+      KAFKA_LISTENERS: CONTROLLER://:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@controller-1:9093"
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx384m"
+    healthcheck:
+      test: [ "CMD", "/opt/kafka/bin/kafka-cluster.sh", "list-endpoints", "--bootstrap-controller", "controller-1:9093" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+    volumes:
+      - ./kafka/controller-1:/tmp/kafka-logs
+    cpus: 0.5
+    mem_limit: 768m
+
+  # -- Kafka broker --
+  broker-1:
+    image: docker.io/apache/kafka:4.1.1
+    container_name: kafka-broker-1
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 20s
+    depends_on:
+      - controller-1
+    environment:
+      KAFKA_CLUSTER_ID: "01916ec2-824f-77b4-a3c2-c1ccfd480449"
+      KAFKA_NODE_ID: "2"
+      KAFKA_PROCESS_ROLES: broker
+
+      KAFKA_LISTENERS: PLAINTEXT://:9092,EXTERNAL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-1:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@controller-1:9093"
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_HEAP_OPTS: "-Xms1g -Xmx1g"
+
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS: "6000"
+      KAFKA_GROUP_MAX_SESSION_TIMEOUT_MS: "300000"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "3000"
+    healthcheck:
+      test: [ "CMD", "/opt/kafka/bin/kafka-topics.sh", "--list", "--bootstrap-server", "broker-1:9092" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    volumes:
+      - ./kafka/broker-1:/tmp/kafka-logs
+    ports:
+      - "9092:9092"   # internal usage
+      - "9094:9094"   # external usage
+    cpus: 0.5
+    mem_limit: 2g
+
+  # --- Kafka UI ---
+  kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:v1.4.2
+    container_name: kafka-ui
+    restart: unless-stopped
+    depends_on:
+      broker-1:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "kafka-cluster"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "broker-1:9092"
+      DYNAMIC_CONFIG_ENABLED: "true"
+    ports:
+      - "127.0.0.1:18950:8080"
+    cpus: 0.5
+    mem_limit: 512m
+
+  # -- Prometheus --
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 1s
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yaml'
+      - '--storage.tsdb.path=/prometheus'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9090/-/healthy || exit 1"]
+      interval: 60s
+      timeout: 60s
+      retries: 10
+      start_period: 5s
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    cpus: 0.5
+    mem_limit: 512m
+
+  # -- Grafana --
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 1s
+    depends_on:
+      - prometheus
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: http://localhost:3001
+      GF_DATASOURCES_DEFAULT_NAME: Prometheus
+      GF_DATASOURCES_DEFAULT_TYPE: prometheus
+      GF_DATASOURCES_DEFAULT_URL: http://prometheus:9090
+#    volumes:
+#      - grafana_data:/var/lib/grafana
+    volumes:
+      - ./grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/main.yaml
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:3000/api/health || exit 1"]
+      interval: 60s
+      timeout: 65s
+      retries: 10
+      start_period: 5s
+    cpus: 0.5
+    mem_limit: 512m
+
+  # -- Postgres --
+  umami-db:
+    image: postgres:15-alpine
+    container_name: umami-db
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 1s
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: umami
+    volumes:
+      - umami-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 60s
+      timeout: 60s
+      retries: 10
+      start_period: 5s
+    cpus: 0.5
+    mem_limit: 512m
+
+  # -- Umami --
+  umami:
+    image: ghcr.io/umami-software/umami:latest
+    container_name: umami
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 1s
+    depends_on:
+      umami-db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://umami:umami@umami-db:5432/umami
+      APP_SECRET: secret
+      NODE_OPTIONS: "--max_old_space_size=256"
+      DISABLE_BOT_CHECK: "1"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:3000/api/heartbeat || exit 1"]
+      interval: 60s
+      timeout: 60s
+      retries: 10
+      start_period: 5s
+    cpus: 0.5
+    mem_limit: 512m
+
+volumes:
+  umami-db-data: {}
+  prometheus_data: {}
+  grafana_data: {}

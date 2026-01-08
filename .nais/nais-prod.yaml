@@ -1,0 +1,32 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: reops-event-proxy
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+spec:
+  image: "{{ image }}"
+  port: 8080
+  liveness:
+    path: /isalive
+    initialDelay: 30
+  readiness:
+    path: /isready
+    initialDelay: 5
+  replicas:
+    min: 2
+    max: 4
+    cpuThresholdPercentage: 80
+#  ingresses:
+#    - "https://something.nav.no"
+  prometheus:
+    enabled: true
+    path: /open/metrics
+  resources:
+    limits:
+      cpu: "1"
+      memory: 1024Mi
+    requests:
+      cpu: "50m"
+      memory: 256Mi
