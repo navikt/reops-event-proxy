@@ -4,6 +4,11 @@ spring:
   kafka:
     bootstrap-servers: localhost:9094
     topic: test2
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+  main:
+    banner-mode: off
   threads:
     virtual:
       enabled: true
@@ -14,18 +19,17 @@ server:
 management:
   endpoints:
     web:
+      base-path: /internal/
       exposure:
-        include: "*"
-  endpoint:
-    health:
-      show-details: always
+        include: info, health, metrics, prometheus
 
 logging:
   level:
     root: INFO
-    org.springframework.web: DEBUG
-    no.nav.reops: TRACE
-    org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
-    reactor.netty.http.client: DEBUG
-    org.apache.kafka.clients.NetworkClient: ERROR
-    org.apache.kafka.clients.Metadata: ERROR
+    org.springframework.web: WARN
+    no.nav.reops: INFO
+    org.springframework.web.reactive.function.client.ExchangeFunctions: WARN
+    reactor.netty.http.client: WARN
+    org.apache.kafka.clients.NetworkClient: WARN
+    org.apache.kafka.clients.Metadata: WARN
+    org.apache.kafka.common.config.AbstractConfig: WARN

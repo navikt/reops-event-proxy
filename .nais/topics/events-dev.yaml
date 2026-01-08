@@ -5,6 +5,8 @@ metadata:
   namespace: team-researchops
   labels:
     team: team-researchops
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
 spec:
   pool: nav-dev
   config:

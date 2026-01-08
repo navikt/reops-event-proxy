@@ -16,13 +16,13 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: JDK
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '25'
-      - name: Setup Gradle
+      - name: Setup gradle
         uses: gradle/actions/setup-gradle@v5
         with:
           cache-disabled: true
@@ -68,17 +68,17 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/topics/events-dev.yaml
 
-#  deploy-application-dev:
-#    needs: build
-#    runs-on: ubuntu-latest
-#    permissions:
-#      contents: read
-#      id-token: write
-#    steps:
-#      - uses: actions/checkout@v4
-#      - name: Deploy application to Dev
-#        uses: nais/deploy/actions/deploy@v2
-#        env:
-#          CLUSTER: dev-gcp
-#          RESOURCE: .nais/nais-dev.yaml
-#          VAR: image=${{ needs.build.outputs.image }},version=${{ github.sha }}
+  deploy-application-dev:
+    needs: deploy-kafka-dev
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy application to Dev
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/nais-dev.yaml
+          VAR: image=${{ needs.build.outputs.image }},version=${{ github.sha }}

@@ -10,6 +10,6 @@ class ControllerAdvice {
 
     @ExceptionHandler(Exception::class)
     fun handleGeneralException(ex: Exception): ResponseEntity<String> {
-        return ResponseEntity("Noe uventet feilet: " + ex.message, HttpStatus.INTERNAL_SERVER_ERROR)
+        return ResponseEntity("Noe uventet feilet", HttpStatus.INTERNAL_SERVER_ERROR)
     }
 }
