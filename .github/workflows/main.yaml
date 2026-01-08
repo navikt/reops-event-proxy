@@ -50,7 +50,6 @@ jobs:
           echo "image=${{ steps.docker-build-push.outputs.image }}"
           echo "version=${{ github.sha }}"
           echo "========================================"
-
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
 
@@ -79,7 +78,6 @@ jobs:
       - name: Deploy application to Dev
         uses: nais/deploy/actions/deploy@v2
         env:
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: dev-gcp
           RESOURCE: .nais/nais-dev.yaml
           VAR: image=${{ needs.build.outputs.image }}

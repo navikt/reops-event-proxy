@@ -9,10 +9,10 @@ spec:
   image: "{{ image }}"
   port: 8080
   liveness:
-    path: /isalive
+    path: /internal/health
     initialDelay: 30
   readiness:
-    path: /isready
+    path: /internal/health
     initialDelay: 5
   replicas:
     min: 2
@@ -22,7 +22,7 @@ spec:
 #    - "https://something.nav.no"
   prometheus:
     enabled: true
-    path: /open/metrics
+    path: /internal/prometheus
   resources:
     limits:
       cpu: "1"
@@ -30,3 +30,8 @@ spec:
     requests:
       cpu: "50m"
       memory: 256Mi
+  kafka:
+    pool: nav-prod
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: kubernetes
