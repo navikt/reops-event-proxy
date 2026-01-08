@@ -22,9 +22,15 @@ jobs:
         with:
           distribution: temurin
           java-version: '25'
-          cache: maven
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-disabled: true
+          dependency-graph: generate-and-submit
       - name: Build
-        run: mvn clean package --batch-mode --settings ./.mvn/settings.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew clean build -x test
       - name: Login to GitHub Packages Docker Registry
         uses: docker/login-action@v3
         with:

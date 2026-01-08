@@ -27,6 +27,8 @@ replay_pid*
 .kotlin/
 /.idea/
 /target/
+/build/
+.gradle/
 /.compose/kafka/broker-1/
 /.compose/kafka/controller-1/
 .DS_Store
