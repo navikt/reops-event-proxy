@@ -15,7 +15,7 @@ spec:
     path: /internal/health
     initialDelay: 5
   replicas:
-    min: 2
+    min: 1
     max: 4
     cpuThresholdPercentage: 80
   ingresses:
@@ -29,7 +29,7 @@ spec:
       memory: 1024Mi
     requests:
       cpu: "50m"
-      memory: 256Mi
+      memory: 512Mi
   kafka:
     pool: nav-dev
   accessPolicy:
