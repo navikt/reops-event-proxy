@@ -4,9 +4,6 @@ spring:
   kafka:
     bootstrap-servers: localhost:9094
     topic: test2
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
   main:
     banner-mode: off
   threads:
