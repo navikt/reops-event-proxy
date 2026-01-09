@@ -32,6 +32,10 @@ spec:
       memory: 256Mi
   kafka:
     pool: nav-dev
+  accessPolicy:
+    outbound:
+      external:
+        - host: nav-dev-kafka-nav-dev.aivencloud.com
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: kubernetes
