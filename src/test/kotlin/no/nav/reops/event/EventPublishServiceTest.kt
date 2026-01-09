@@ -1,5 +1,7 @@
 package no.nav.reops.event
 
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -21,7 +23,10 @@ class EventPublishServiceTest {
     fun `publishEventAsync sends record and returns future`() {
         val kafkaTemplate = mock<KafkaTemplate<String, Event>>()
         val topic = "test-topic"
-        val service = EventPublishService(kafkaTemplate, topic)
+        val meterRegistry = mock<MeterRegistry>()
+        val counter = mock<Counter>()
+        whenever(meterRegistry.counter("kafka_events_created_total", "topic", topic)).thenReturn(counter)
+        val service = EventPublishService(kafkaTemplate, meterRegistry, topic)
 
         val event = mock<Event>()
         val userAgent = "KakeAgent/1.0"
@@ -50,7 +55,10 @@ class EventPublishServiceTest {
     fun `publishEventAsync still returns future when send completes exceptionally`() {
         val kafkaTemplate = mock<KafkaTemplate<String, Event>>()
         val topic = "test-topic"
-        val service = EventPublishService(kafkaTemplate, topic)
+        val meterRegistry = mock<MeterRegistry>()
+        val counter = mock<Counter>()
+        whenever(meterRegistry.counter("kafka_events_created_total", "topic", topic)).thenReturn(counter)
+        val service = EventPublishService(kafkaTemplate, meterRegistry, topic)
 
         val event = mock<Event>()
         val userAgent = "JUnit/5"
