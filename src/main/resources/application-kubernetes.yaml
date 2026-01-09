@@ -1,7 +1,7 @@
 spring:
   kafka:
     bootstrap-servers: ${KAFKA_BROKERS}
-    topic: reops-insight-event
+    topic: team-researchops.reops-insight-event
     properties:
       security.protocol: SSL
       ssl.endpoint.identification.algorithm: ""
