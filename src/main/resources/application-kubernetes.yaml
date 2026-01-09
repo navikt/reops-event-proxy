@@ -4,12 +4,14 @@ spring:
     topic: reops-insight-event
     properties:
       security.protocol: SSL
-      ssl:
-        keystore:
-          type: PKCS12
-          location: ${KAFKA_KEYSTORE_PATH}
-          password: ${KAFKA_CREDSTORE_PASSWORD}
-        truststore:
-          type: JKS
-          location: ${KAFKA_TRUSTSTORE_PATH}
-          password: ${KAFKA_CREDSTORE_PASSWORD}
+      ssl.endpoint.identification.algorithm: ""
+      ssl.truststore.type: JKS
+      ssl.truststore.location: ${KAFKA_TRUSTSTORE_PATH}
+      ssl.truststore.password: ${KAFKA_CREDSTORE_PASSWORD}
+      ssl.keystore.type: PKCS12
+      ssl.keystore.location: ${KAFKA_KEYSTORE_PATH}
+      ssl.keystore.password: ${KAFKA_CREDSTORE_PASSWORD}
+      ssl.key.password: ${KAFKA_CREDSTORE_PASSWORD}
+      reconnect.backoff.ms: 5000
+      reconnect.backoff.max.ms: 1000
+      auto.offset.reset: earliest

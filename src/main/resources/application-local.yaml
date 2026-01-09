@@ -4,7 +4,7 @@ spring:
     topic: test2
     properties:
       security.protocol: PLAINTEXT
-
+      auto.offset.reset: latest
 server:
   port: 8082
 
