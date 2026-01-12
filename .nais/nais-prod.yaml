@@ -15,23 +15,27 @@ spec:
     path: /internal/health
     initialDelay: 5
   replicas:
-    min: 2
+    min: 1
     max: 4
     cpuThresholdPercentage: 80
-#  ingresses:
-#    - "https://something.nav.no"
+  ingresses:
+    - "https://reops-event-proxy.nav.no"
   prometheus:
     enabled: true
     path: /internal/prometheus
   resources:
     limits:
       cpu: "1"
-      memory: 1024Mi
+      memory: 2048Mi
     requests:
       cpu: "50m"
-      memory: 256Mi
+      memory: 1024Mi
   kafka:
     pool: nav-prod
+  accessPolicy:
+    outbound:
+      external:
+        - host: nav-prod-kafka-nav-prod.aivencloud.com
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: kubernetes

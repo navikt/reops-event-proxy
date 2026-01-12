@@ -81,3 +81,32 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/nais-dev.yaml
           VAR: image=${{ needs.build.outputs.image }}
+
+  deploy-kafka-prod:
+    needs: [build, deploy-application-dev]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy kafka to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/topics/events-prod.yaml
+
+  deploy-application-prod:
+    needs: [build, deploy-kafka-prod, deploy-application-dev]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy application to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/nais-prod.yaml
+          VAR: image=${{ needs.build.outputs.image }}
