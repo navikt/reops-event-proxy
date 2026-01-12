@@ -6,6 +6,7 @@ spring:
     topic: test2
   main:
     banner-mode: off
+    web-application-type: reactive
   threads:
     virtual:
       enabled: true
