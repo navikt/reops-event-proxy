@@ -15,3 +15,8 @@ spring:
       reconnect.backoff.ms: 5000
       reconnect.backoff.max.ms: 1000
       auto.offset.reset: earliest
+
+logging:
+  structured:
+    format:
+      console: logstash
