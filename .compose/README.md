@@ -35,6 +35,6 @@ colima start --cpu 4 --memory 8
 |:------------|:----------------------:|
 | kafka-ui    | http://localhost:18950 |
 | Umami       | http://localhost:3000  |
-| Umami-db    |     localhost:5432     |
+| Umami-db    | http://localhost:5432  |
 | Prometheus  | http://localhost:9090  |
 | Grafana     | http://localhost:3001  |
