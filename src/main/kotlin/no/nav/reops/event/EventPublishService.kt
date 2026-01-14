@@ -12,8 +12,6 @@ import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 
-const val USER_AGENT = "User-Agent"
-
 @Service
 class EventPublishService(
     private val kafkaTemplate: KafkaTemplate<String, Event>,
@@ -32,10 +30,7 @@ class EventPublishService(
         val future = kafkaTemplate.send(record)
         future.whenComplete { _, ex ->
             if (ex == null) {
-                LOG.info(
-                    "Kafka publish ok topic={} key={}",
-                    topic, key
-                )
+                LOG.info("Kafka publish ok topic={} key={}", topic, key)
             } else {
                 LOG.warn("Kafka publish failed topic={} key={} msg={}", topic, key, ex.message)
             }
