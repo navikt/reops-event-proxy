@@ -9,7 +9,7 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 @Service
@@ -21,11 +21,18 @@ class EventPublishService(
     private val kafkaEventCounter: Counter =
         meterRegistry.counter("kafka_events_created_total", "topic", topic)
 
-    fun publishEventAsync(event: Event, userAgent: String): CompletableFuture<SendResult<String, Event>> {
+    fun publishEventAsync(
+        event: Event,
+        userAgent: String,
+        excludeFilters: String?
+    ): CompletableFuture<SendResult<String, Event>> {
         kafkaEventCounter.increment()
         val key = UUID.randomUUID().toString()
         val record = ProducerRecord(topic, key, event)
         record.headers().add(USER_AGENT, userAgent.toByteArray(StandardCharsets.UTF_8))
+        if (excludeFilters != null) {
+            record.headers().add(EXCLUDE_FILTERS, excludeFilters.toByteArray(StandardCharsets.UTF_8))
+        }
 
         val future = kafkaTemplate.send(record)
         future.whenComplete { _, ex ->

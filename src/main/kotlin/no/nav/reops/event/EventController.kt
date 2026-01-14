@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import no.nav.reops.truncation.TruncationReport
 import no.nav.reops.truncation.sanitizeForKafkaWithReport
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.concurrent.CompletableFuture
 
 const val USER_AGENT = "User-Agent"
+const val EXCLUDE_FILTERS = "X-Exclude-Filters"
 
 @RestController
 class Controller(
@@ -23,12 +25,15 @@ class Controller(
     @PostMapping("/api/send")
     fun sendEvent(
         @RequestBody event: Event,
-        @RequestHeader(USER_AGENT, required = true) userAgent: String
+        @RequestHeader(USER_AGENT) userAgent: String,
+        @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?
     ): CompletableFuture<ResponseEntity<Response>> {
         val sanitized = event.sanitizeForKafkaWithReport()
         recordTruncationMetrics(sanitized.truncationReport)
 
-        return eventPublishService.publishEventAsync(sanitized.event, userAgent)
+        LOG.info("excludedFilters: $excludeFilters")
+
+        return eventPublishService.publishEventAsync(sanitized.event, userAgent, excludeFilters)
             .thenApply {
                 ResponseEntity.status(HttpStatus.CREATED)
                     .body(
@@ -52,6 +57,10 @@ class Controller(
                     .register(meterRegistry)
                     .increment()
             }
+    }
+
+    private companion object {
+        private val LOG = LoggerFactory.getLogger(Controller::class.java)
     }
 }
 
