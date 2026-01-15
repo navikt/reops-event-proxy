@@ -35,7 +35,7 @@ class EventPublishServiceTest {
         val recordCaptor = argumentCaptor<ProducerRecord<String, Event>>()
         whenever(kafkaTemplate.send(any<ProducerRecord<String, Event>>())).thenReturn(sendFuture)
 
-        val returnedFuture = service.publishEventAsync(event, userAgent)
+        val returnedFuture = service.publishEventAsync(event, userAgent, "filter1,filter2")
         verify(kafkaTemplate, times(1)).send(recordCaptor.capture())
 
         val record = recordCaptor.firstValue
@@ -65,7 +65,7 @@ class EventPublishServiceTest {
         val sendFuture: CompletableFuture<SendResult<String, Event>> = CompletableFuture()
         whenever(kafkaTemplate.send(any<ProducerRecord<String, Event>>())).thenReturn(sendFuture)
 
-        val returnedFuture = service.publishEventAsync(event, userAgent)
+        val returnedFuture = service.publishEventAsync(event, userAgent, "filter1,filter2")
         sendFuture.completeExceptionally(IllegalStateException("boom"))
         assertEquals(sendFuture, returnedFuture)
     }

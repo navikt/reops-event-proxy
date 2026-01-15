@@ -1,5 +1,7 @@
 package no.nav.reops.event
 
+import com.fasterxml.jackson.annotation.JsonInclude
+
 data class Event(
     val type: String,
     val payload: Payload
@@ -12,6 +14,7 @@ data class Event(
         val title: String,
         val url: String,
         val referrer: String,
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
         val data: Map<String, Any?>? = null,
     )
 }
