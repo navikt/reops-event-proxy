@@ -4,3 +4,8 @@ spring:
   kafka:
     topic: test-topic
     bootstrap-servers: ${spring.embedded.kafka.brokers}
+
+logging:
+  level:
+    root: ERROR
+    no.nav.reops: INFO
