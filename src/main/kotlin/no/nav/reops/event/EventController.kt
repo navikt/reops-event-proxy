@@ -2,6 +2,7 @@ package no.nav.reops.event
 
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
+import no.nav.reops.exception.InvalidEventException
 import no.nav.reops.truncation.TruncationReport
 import no.nav.reops.truncation.sanitizeForKafkaWithReport
 import org.slf4j.LoggerFactory
@@ -28,6 +29,9 @@ class Controller(
         @RequestHeader(USER_AGENT) userAgent: String,
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?
     ): CompletableFuture<ResponseEntity<Response>> {
+
+        validateUmamiPayload(event)
+
         val sanitized = event.sanitizeForKafkaWithReport()
         recordTruncationMetrics(sanitized.truncationReport)
 
@@ -44,6 +48,16 @@ class Controller(
                         )
                     )
             }
+    }
+
+    private fun validateUmamiPayload(event: Event) {
+        val data = event.payload.data ?: return
+
+        if (!data.isObject && !data.isArray) {
+            throw InvalidEventException(
+                "payload.data must be a JSON object or array, but was ${data.nodeType}"
+            )
+        }
     }
 
     private fun recordTruncationMetrics(report: TruncationReport?) {
