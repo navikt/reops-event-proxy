@@ -6,10 +6,19 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 5
     rebase-strategy: "auto"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
     labels:
       - "dependencies"
       - "kotlin"
       - "gradle"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    rebase-strategy: "auto"
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 2
+    rebase-strategy: "auto"
