@@ -23,7 +23,7 @@ internal class TruncationValidate(private val limit: Int = MAX_LENGTH) {
 
         return when {
             node.isString -> {
-                JsonNodeFactory.instance.textNode(truncateMarked(field, node.asString()))
+                JsonNodeFactory.instance.stringNode(truncateMarked(field, node.asString()))
             }
 
             node.isObject -> {

@@ -1,8 +1,8 @@
 plugins {
 	id("org.springframework.boot") version "4.0.1"
 	id("io.spring.dependency-management") version "1.1.7"
-	kotlin("jvm") version "2.2.21"
-	kotlin("plugin.spring") version "2.2.21"
+	kotlin("jvm") version "2.3.0"
+	kotlin("plugin.spring") version "2.3.0"
 }
 
 group = "no.nav.reops"
@@ -35,7 +35,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
 
 	testImplementation("org.springframework.kafka:spring-kafka-test")
-	testImplementation("org.mockito.kotlin:mockito-kotlin:6.1.0")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.0")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 }
 
