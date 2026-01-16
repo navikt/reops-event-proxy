@@ -21,6 +21,8 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import java.nio.charset.StandardCharsets
 import java.time.Duration
+import java.util.UUID
+import kotlin.uuid.Uuid
 
 @ActiveProfiles("test")
 @EmbeddedKafka(partitions = 1, topics = ["test-topic"])
@@ -56,7 +58,7 @@ class EndeTilEndeTest {
             val event = Event(
                 type = "pageview",
                 payload = Event.Payload(
-                    website = "reops",
+                    website = UUID.randomUUID().toString(),
                     hostname = "localhost",
                     screen = "1920x1080",
                     language = "en",

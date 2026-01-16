@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.MeterRegistry
 import no.nav.reops.exception.InvalidEventException
 import no.nav.reops.truncation.TruncationReport
 import no.nav.reops.truncation.sanitizeForKafkaWithReport
+import no.nav.reops.validate.ValidateEvent
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -20,7 +21,8 @@ const val EXCLUDE_FILTERS = "X-Exclude-Filters"
 @RestController
 class Controller(
     private val eventPublishService: EventPublishService,
-    private val meterRegistry: MeterRegistry
+    private val meterRegistry: MeterRegistry,
+    private val validateEvent: ValidateEvent = ValidateEvent()
 ) {
 
     @PostMapping("/api/send")
@@ -29,8 +31,7 @@ class Controller(
         @RequestHeader(USER_AGENT) userAgent: String,
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?
     ): CompletableFuture<ResponseEntity<Response>> {
-
-        validateUmamiPayload(event)
+        validateEvent.validate(event)
 
         val sanitized = event.sanitizeForKafkaWithReport()
         recordTruncationMetrics(sanitized.truncationReport)
@@ -48,16 +49,6 @@ class Controller(
                         )
                     )
             }
-    }
-
-    private fun validateUmamiPayload(event: Event) {
-        val data = event.payload.data ?: return
-
-        if (!data.isObject && !data.isArray) {
-            throw InvalidEventException(
-                "payload.data must be a JSON object or array, but was ${data.nodeType}"
-            )
-        }
     }
 
     private fun recordTruncationMetrics(report: TruncationReport?) {
