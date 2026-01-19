@@ -1,12 +1,15 @@
 package no.nav.reops.event
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import tools.jackson.databind.JsonNode
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class Event(
     val type: String,
     val payload: Payload
 ) {
+    @JsonIgnoreProperties(ignoreUnknown = true)
     data class Payload(
         val website: String,
         val hostname: String,
