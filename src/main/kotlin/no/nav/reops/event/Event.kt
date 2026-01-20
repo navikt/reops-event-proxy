@@ -12,12 +12,18 @@ data class Event(
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class Payload(
         val website: String,
-        val hostname: String,
-        val screen: String,
-        val language: String,
-        val title: String,
-        val url: String,
-        val referrer: String,
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
+        val hostname: String? = null,
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
+        val screen: String? = null,
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
+        val language: String? = null,
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
+        val title: String? = null,
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
+        val url: String? = null,
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
+        val referrer: String? = null,
         @field:JsonInclude(JsonInclude.Include.NON_NULL)
         val data: JsonNode? = null
     )

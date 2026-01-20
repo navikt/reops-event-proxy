@@ -8,6 +8,8 @@ import tools.jackson.databind.node.ObjectNode
 private fun String.requireNotBlank(fieldName: String): String =
     also { require(it.isNotBlank()) { "$fieldName must not be blank" } }
 
+private fun String?.nullIfBlank(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
+
 private fun normalizeDataToObject(node: JsonNode?): JsonNode? {
     if (node == null) return null
     if (node.isObject || node.isArray) return node
@@ -26,46 +28,50 @@ private fun normalizeDataToObject(node: JsonNode?): JsonNode? {
 }
 
 fun Event.sanitizeForKafkaWithReport(): SanitizedEvent {
-    require(type.isNotBlank()) { "type must not be blank" }
     val trunkCollector = TruncationValidate()
 
     val normalized = copy(
+        type = type.trim(),
         payload = payload.copy(
+            website = payload.website.trim(),
+            hostname = payload.hostname.nullIfBlank(),
+            screen = payload.screen.nullIfBlank(),
+            language = payload.language.nullIfBlank(),
+            title = payload.title.nullIfBlank(),
+            url = payload.url.nullIfBlank(),
+            referrer = payload.referrer.nullIfBlank(),
             data = normalizeDataToObject(payload.data)
         )
     )
+
+    normalized.type.requireNotBlank("type")
+    normalized.payload.website.requireNotBlank("payload.website")
 
     val sanitized = normalized.copy(
         type = trunkCollector.truncateMarked("type", normalized.type),
         payload = Event.Payload(
             website = trunkCollector.truncateMarked(
                 "payload.website",
-                normalized.payload.website.requireNotBlank("payload.website")
+                normalized.payload.website
             ),
-            hostname = trunkCollector.truncateMarked(
-                "payload.hostname",
-                normalized.payload.hostname.requireNotBlank("payload.hostname")
-            ),
-            screen = trunkCollector.truncateMarked(
-                "payload.screen",
-                normalized.payload.screen.requireNotBlank("payload.screen")
-            ),
-            language = trunkCollector.truncateMarked(
-                "payload.language",
-                normalized.payload.language.requireNotBlank("payload.language")
-            ),
-            title = trunkCollector.truncateMarked(
-                "payload.title",
-                normalized.payload.title.requireNotBlank("payload.title")
-            ),
-            url = trunkCollector.truncateMarked(
-                "payload.url",
-                normalized.payload.url.requireNotBlank("payload.url")
-            ),
-            referrer = trunkCollector.truncateMarked(
-                "payload.referrer",
-                normalized.payload.referrer.requireNotBlank("payload.referrer")
-            ),
+            hostname = normalized.payload.hostname?.let {
+                trunkCollector.truncateMarked("payload.hostname", it)
+            },
+            screen = normalized.payload.screen?.let {
+                trunkCollector.truncateMarked("payload.screen", it)
+            },
+            language = normalized.payload.language?.let {
+                trunkCollector.truncateMarked("payload.language", it)
+            },
+            title = normalized.payload.title?.let {
+                trunkCollector.truncateMarked("payload.title", it)
+            },
+            url = normalized.payload.url?.let {
+                trunkCollector.truncateMarked("payload.url", it)
+            },
+            referrer = normalized.payload.referrer?.let {
+                trunkCollector.truncateMarked("payload.referrer", it)
+            },
             data = trunkCollector.truncateJsonNode("payload.data", normalized.payload.data)
         )
     )
