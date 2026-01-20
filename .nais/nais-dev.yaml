@@ -5,6 +5,7 @@ metadata:
   namespace: team-researchops
   labels:
     team: team-researchops
+    apiserver-access: enabled
 spec:
   image: "{{ image }}"
   port: 8080
