@@ -58,7 +58,7 @@ class EndeTilEndeTest {
             val event = Event(
                 type = "pageview",
                 payload = Event.Payload(
-                    website = UUID.randomUUID().toString(),
+                    website = UUID.randomUUID(),
                     hostname = "localhost",
                     screen = "1920x1080",
                     language = "en",
@@ -88,5 +88,46 @@ class EndeTilEndeTest {
             assertNotNull(uaHeader)
             assertEquals(userAgent, uaHeader.value().toString(StandardCharsets.UTF_8))
         }
+    }
+
+    @Test
+    fun `forsøk å opprette hendelse hvor website ikke er uuid`() {
+        val invalidEvent = TestEvent(
+            type = "pageview",
+            payload = TestEvent.Payload(
+                website = "unvalid-uuid", // Invalid UUID
+                hostname = "localhost",
+                screen = "1920x1080",
+                language = "en",
+                title = "Home",
+                url = "https://example.test/",
+                referrer = "https://referrer.test/"
+            )
+        )
+
+        val userAgent = "JUnit/5"
+
+        webTestClient().post()
+            .uri("/api/send")
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(USER_AGENT, userAgent)
+            .bodyValue(invalidEvent)
+            .exchange()
+            .expectStatus().isBadRequest
+    }
+
+    data class TestEvent(
+        val type: String,
+        val payload: Payload
+    ) {
+        data class Payload(
+            val website: String,
+            val hostname: String? = null,
+            val screen: String? = null,
+            val language: String? = null,
+            val title: String? = null,
+            val url: String? = null,
+            val referrer: String? = null
+        )
     }
 }

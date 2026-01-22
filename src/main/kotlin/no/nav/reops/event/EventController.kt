@@ -4,7 +4,6 @@ import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import no.nav.reops.truncation.TruncationReport
 import no.nav.reops.truncation.sanitizeForKafkaWithReport
-import no.nav.reops.validate.ValidateEvent
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -20,16 +19,11 @@ const val USER_AGENT = "User-Agent"
 const val EXCLUDE_FILTERS = "X-Exclude-Filters"
 
 @CrossOrigin(
-    value = ["*"],
-    allowedHeaders = ["*"],
-    methods = [RequestMethod.POST, RequestMethod.OPTIONS],
-    maxAge = 8000
+    value = ["*"], allowedHeaders = ["*"], methods = [RequestMethod.POST, RequestMethod.OPTIONS], maxAge = 8000
 )
 @RestController
 class Controller(
-    private val eventPublishService: EventPublishService,
-    private val meterRegistry: MeterRegistry,
-    private val validateEvent: ValidateEvent = ValidateEvent()
+    private val eventPublishService: EventPublishService, private val meterRegistry: MeterRegistry
 ) {
 
     @PostMapping("/api/send")
@@ -38,7 +32,6 @@ class Controller(
         @RequestHeader(USER_AGENT, required = false) userAgent: String?,
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?
     ): CompletableFuture<ResponseEntity<Response>> {
-        validateEvent.validate(event)
 
         val sanitized = event.sanitizeForKafkaWithReport()
         recordTruncationMetrics(sanitized.truncationReport)
@@ -46,14 +39,10 @@ class Controller(
         LOG.info("excludedFilters: $excludeFilters")
         val ua = userAgent ?: "unknown"
 
-        return eventPublishService.publishEventAsync(sanitized.event, ua, excludeFilters)
-            .thenApply {
-                ResponseEntity.status(HttpStatus.CREATED)
-                    .body(
+        return eventPublishService.publishEventAsync(sanitized.event, ua, excludeFilters).thenApply {
+                ResponseEntity.status(HttpStatus.CREATED).body(
                         Response(
-                            message = "Created",
-                            code = 201,
-                            truncationReport = sanitized.truncationReport
+                            message = "Created", code = 201, truncationReport = sanitized.truncationReport
                         )
                     )
             }
@@ -61,14 +50,8 @@ class Controller(
 
     private fun recordTruncationMetrics(report: TruncationReport?) {
         if (report == null) return
-        report.violations
-            .map { it.field }
-            .distinct()
-            .forEach { field ->
-                Counter.builder("truncations_by_field_total")
-                    .tag("field", field)
-                    .register(meterRegistry)
-                    .increment()
+        report.violations.map { it.field }.distinct().forEach { field ->
+                Counter.builder("truncations_by_field_total").tag("field", field).register(meterRegistry).increment()
             }
     }
 
@@ -78,7 +61,5 @@ class Controller(
 }
 
 data class Response(
-    val message: String,
-    val code: Int,
-    val truncationReport: TruncationReport? = null
+    val message: String, val code: Int, val truncationReport: TruncationReport? = null
 )

@@ -3,6 +3,7 @@ package no.nav.reops.event
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import tools.jackson.databind.JsonNode
+import java.util.UUID
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Event(
@@ -11,7 +12,7 @@ data class Event(
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class Payload(
-        val website: String,
+        val website: UUID,
         @field:JsonInclude(JsonInclude.Include.NON_NULL)
         val hostname: String? = null,
         @field:JsonInclude(JsonInclude.Include.NON_NULL)
