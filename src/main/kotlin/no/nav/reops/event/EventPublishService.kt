@@ -18,13 +18,10 @@ class EventPublishService(
     meterRegistry: MeterRegistry,
     @Value("\${spring.kafka.topic}") private val topic: String
 ) {
-    private val kafkaEventCounter: Counter =
-        meterRegistry.counter("kafka_events_created_total", "topic", topic)
+    private val kafkaEventCounter: Counter = meterRegistry.counter("kafka_events_created_total", "topic", topic)
 
     fun publishEventAsync(
-        event: Event,
-        userAgent: String,
-        excludeFilters: String?
+        event: Event, userAgent: String, excludeFilters: String?
     ): CompletableFuture<SendResult<String, Event>> {
         kafkaEventCounter.increment()
         val key = UUID.randomUUID().toString()

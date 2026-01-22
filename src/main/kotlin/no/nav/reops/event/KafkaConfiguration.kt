@@ -24,6 +24,5 @@ class KafkaProducerConfig(
     }
 
     @Bean
-    fun kafkaTemplate(): KafkaTemplate<String, Event> =
-        KafkaTemplate(producerFactory())
+    fun kafkaTemplate(): KafkaTemplate<String, Event> = KafkaTemplate(producerFactory())
 }

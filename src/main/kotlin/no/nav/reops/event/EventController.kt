@@ -40,19 +40,19 @@ class Controller(
         val ua = userAgent ?: "unknown"
 
         return eventPublishService.publishEventAsync(sanitized.event, ua, excludeFilters).thenApply {
-                ResponseEntity.status(HttpStatus.CREATED).body(
-                        Response(
-                            message = "Created", code = 201, truncationReport = sanitized.truncationReport
-                        )
-                    )
-            }
+            ResponseEntity.status(HttpStatus.CREATED).body(
+                Response(
+                    message = "Created", code = 201, truncationReport = sanitized.truncationReport
+                )
+            )
+        }
     }
 
     private fun recordTruncationMetrics(report: TruncationReport?) {
         if (report == null) return
         report.violations.map { it.field }.distinct().forEach { field ->
-                Counter.builder("truncations_by_field_total").tag("field", field).register(meterRegistry).increment()
-            }
+            Counter.builder("truncations_by_field_total").tag("field", field).register(meterRegistry).increment()
+        }
     }
 
     private companion object {

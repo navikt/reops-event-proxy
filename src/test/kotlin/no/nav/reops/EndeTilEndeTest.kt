@@ -35,10 +35,7 @@ class EndeTilEndeTest {
     @Autowired
     private lateinit var embeddedKafka: EmbeddedKafkaBroker
 
-    private fun webTestClient(): WebTestClient =
-        WebTestClient.bindToServer()
-            .baseUrl("http://localhost:$port")
-            .build()
+    private fun webTestClient(): WebTestClient = WebTestClient.bindToServer().baseUrl("http://localhost:$port").build()
 
     @Test
     fun `skal kunne publiserer hendelse på kafka`() {
@@ -56,8 +53,7 @@ class EndeTilEndeTest {
             embeddedKafka.consumeFromAnEmbeddedTopic(c, topic)
 
             val event = Event(
-                type = "pageview",
-                payload = Event.Payload(
+                type = "pageview", payload = Event.Payload(
                     website = UUID.randomUUID(),
                     hostname = "localhost",
                     screen = "1920x1080",
@@ -70,16 +66,10 @@ class EndeTilEndeTest {
 
             val userAgent = "JUnit/5"
 
-            webTestClient().post()
-                .uri("/api/send")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header(USER_AGENT, userAgent)
-                .bodyValue(event)
-                .exchange()
-                .expectStatus().isCreated
+            webTestClient().post().uri("/api/send").contentType(MediaType.APPLICATION_JSON)
+                .header(USER_AGENT, userAgent).bodyValue(event).exchange().expectStatus().isCreated
 
-            val record: ConsumerRecord<String, Event> =
-                KafkaTestUtils.getSingleRecord(c, topic, Duration.ofSeconds(10))
+            val record: ConsumerRecord<String, Event> = KafkaTestUtils.getSingleRecord(c, topic, Duration.ofSeconds(10))
 
             assertNotNull(record.key())
             assertEquals(event, record.value())
@@ -93,8 +83,7 @@ class EndeTilEndeTest {
     @Test
     fun `forsøk å opprette hendelse hvor website ikke er uuid`() {
         val invalidEvent = TestEvent(
-            type = "pageview",
-            payload = TestEvent.Payload(
+            type = "pageview", payload = TestEvent.Payload(
                 website = "unvalid-uuid", // Invalid UUID
                 hostname = "localhost",
                 screen = "1920x1080",
@@ -107,18 +96,12 @@ class EndeTilEndeTest {
 
         val userAgent = "JUnit/5"
 
-        webTestClient().post()
-            .uri("/api/send")
-            .contentType(MediaType.APPLICATION_JSON)
-            .header(USER_AGENT, userAgent)
-            .bodyValue(invalidEvent)
-            .exchange()
-            .expectStatus().isBadRequest
+        webTestClient().post().uri("/api/send").contentType(MediaType.APPLICATION_JSON).header(USER_AGENT, userAgent)
+            .bodyValue(invalidEvent).exchange().expectStatus().isBadRequest
     }
 
     data class TestEvent(
-        val type: String,
-        val payload: Payload
+        val type: String, val payload: Payload
     ) {
         data class Payload(
             val website: String,

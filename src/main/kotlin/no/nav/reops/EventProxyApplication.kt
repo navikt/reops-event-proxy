@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class EventProxyApplication
 
 fun main(args: Array<String>) {
-	runApplication<EventProxyApplication>(*args)
+    runApplication<EventProxyApplication>(*args)
 }
