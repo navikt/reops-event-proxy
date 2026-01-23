@@ -39,6 +39,7 @@ fun Event.sanitizeForKafkaWithReport(): SanitizedEvent {
             title = payload.title.nullIfBlank(),
             url = payload.url.nullIfBlank(),
             referrer = payload.referrer.nullIfBlank(),
+            name = payload.name.nullIfBlank(),
             data = normalizeDataToObject(payload.data)
         )
     )
@@ -48,19 +49,29 @@ fun Event.sanitizeForKafkaWithReport(): SanitizedEvent {
     val sanitized = normalized.copy(
         type = trunkCollector.truncateMarked("type", normalized.type),
         payload = Event.Payload(
-            website = normalized.payload.website, hostname = normalized.payload.hostname?.let {
-            trunkCollector.truncateMarked("payload.hostname", it)
-        }, screen = normalized.payload.screen?.let {
-            trunkCollector.truncateMarked("payload.screen", it)
-        }, language = normalized.payload.language?.let {
-            trunkCollector.truncateMarked("payload.language", it)
-        }, title = normalized.payload.title?.let {
-            trunkCollector.truncateMarked("payload.title", it)
-        }, url = normalized.payload.url?.let {
-            trunkCollector.truncateMarked("payload.url", it)
-        }, referrer = normalized.payload.referrer?.let {
-            trunkCollector.truncateMarked("payload.referrer", it)
-        }, data = trunkCollector.truncateJsonNode("payload.data", normalized.payload.data)
+            website = normalized.payload.website,
+            hostname = normalized.payload.hostname?.let {
+                trunkCollector.truncateMarked("payload.hostname", it)
+            },
+            screen = normalized.payload.screen?.let {
+                trunkCollector.truncateMarked("payload.screen", it)
+            },
+            language = normalized.payload.language?.let {
+                trunkCollector.truncateMarked("payload.language", it)
+            },
+            title = normalized.payload.title?.let {
+                trunkCollector.truncateMarked("payload.title", it)
+            },
+            url = normalized.payload.url?.let {
+                trunkCollector.truncateMarked("payload.url", it)
+            },
+            referrer = normalized.payload.referrer?.let {
+                trunkCollector.truncateMarked("payload.referrer", it)
+            },
+            name = normalized.payload.name?.let {
+                trunkCollector.truncateMarked("payload.name", it)
+            },
+            data = trunkCollector.truncateJsonNode("payload.data", normalized.payload.data)
         )
     )
 

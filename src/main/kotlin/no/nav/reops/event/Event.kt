@@ -18,6 +18,7 @@ data class Event(
         @field:JsonInclude(JsonInclude.Include.NON_NULL) val title: String? = null,
         @field:JsonInclude(JsonInclude.Include.NON_NULL) val url: String? = null,
         @field:JsonInclude(JsonInclude.Include.NON_NULL) val referrer: String? = null,
+        @field:JsonInclude(JsonInclude.Include.NON_NULL) val name: String? = null,
         @field:JsonInclude(JsonInclude.Include.NON_NULL) val data: JsonNode? = null
     )
 }
