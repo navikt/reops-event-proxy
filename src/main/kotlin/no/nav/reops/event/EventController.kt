@@ -21,23 +21,20 @@ class EventController(
         @RequestBody event: Event,
         @RequestHeader(USER_AGENT, required = false) userAgent: String?,
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
-        @RequestHeader(X_CLIENT_REGION, required = false) clientRegion: String?,
-        @RequestHeader(X_CLIENT_CITY, required = false) clientCity: String?
+        @RequestHeader(FORWARDED_FOR, required = false) forwardedFor: String?,
     ): CompletableFuture<ResponseEntity<Response>> {
         val sanitized = event.sanitizeForKafkaWithReport()
         recordTruncationMetrics(sanitized.truncationReport)
 
         val safeUserAgent = userAgent?.trim().takeUnless { it.isNullOrEmpty() } ?: ""
         val safeExcludeFilters = excludeFilters?.trim().takeUnless { it.isNullOrEmpty() }
-        val safeClientRegion = clientRegion?.trim().takeUnless { it.isNullOrEmpty() }
-        val safeClientCity = clientCity?.trim().takeUnless { it.isNullOrEmpty() }
+        val safeForwardedFor = forwardedFor?.trim().takeUnless { it.isNullOrEmpty() }
 
         return eventPublishService.publishEventAsync(
             event = sanitized.event,
             userAgent = safeUserAgent,
             excludeFilters = safeExcludeFilters,
-            clientRegion = safeClientRegion,
-            clientCity = safeClientCity
+            forwardedFor = safeForwardedFor
         ).thenApply {
             ResponseEntity.status(HttpStatus.CREATED).body(
                 Response("Created", 201, sanitized.truncationReport)

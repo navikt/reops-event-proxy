@@ -31,8 +31,7 @@ class EventPublishServiceTest {
 
         val event = mock<Event>()
         val userAgent = "KakeAgent/1.0"
-        val clientRegion = "NO"
-        val clientCity = "Oslo"
+        val forwardedFor = "127.0.0.1"
         val excludeFilters = "filter1,filter2"
 
         val sendFuture: CompletableFuture<SendResult<String, Event>> = CompletableFuture()
@@ -43,8 +42,7 @@ class EventPublishServiceTest {
             event = event,
             userAgent = userAgent,
             excludeFilters = excludeFilters,
-            clientRegion = clientRegion,
-            clientCity = clientCity
+            forwardedFor = forwardedFor,
         )
 
         verify(kafkaTemplate, times(1)).send(recordCaptor.capture())
@@ -58,13 +56,9 @@ class EventPublishServiceTest {
         assertNotNull(uaHeader)
         assertEquals(userAgent, uaHeader!!.value().toString(UTF_8))
 
-        val regionHeader = record.headers().lastHeader(X_CLIENT_REGION)
+        val regionHeader = record.headers().lastHeader(FORWARDED_FOR)
         assertNotNull(regionHeader)
-        assertEquals(clientRegion, regionHeader!!.value().toString(UTF_8))
-
-        val cityHeader = record.headers().lastHeader(X_CLIENT_CITY)
-        assertNotNull(cityHeader)
-        assertEquals(clientCity, cityHeader!!.value().toString(UTF_8))
+        assertEquals(forwardedFor, regionHeader!!.value().toString(UTF_8))
 
         val excludeHeader = record.headers().lastHeader(EXCLUDE_FILTERS)
         assertNotNull(excludeHeader)
@@ -86,8 +80,7 @@ class EventPublishServiceTest {
 
         val event = mock<Event>()
         val userAgent = "JUnit/5"
-        val clientRegion = "NO"
-        val clientCity = "Oslo"
+        val forwardedFor = "127.0.0.1"
         val excludeFilters = "filter1,filter2"
 
         val sendFuture: CompletableFuture<SendResult<String, Event>> = CompletableFuture()
@@ -97,8 +90,7 @@ class EventPublishServiceTest {
             event = event,
             userAgent = userAgent,
             excludeFilters = excludeFilters,
-            clientRegion = clientRegion,
-            clientCity = clientCity
+            forwardedFor = forwardedFor,
         )
 
         sendFuture.completeExceptionally(IllegalStateException("boom"))

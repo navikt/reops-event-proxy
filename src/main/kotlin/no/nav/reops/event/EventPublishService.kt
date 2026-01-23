@@ -14,8 +14,7 @@ import java.util.concurrent.CompletableFuture
 
 const val USER_AGENT = "user-agent"
 const val EXCLUDE_FILTERS = "x-exclude-filters"
-const val X_CLIENT_REGION = "x-client-region"
-const val X_CLIENT_CITY = "x-client-city"
+const val FORWARDED_FOR = "x-forwarded-for"
 
 @Service
 class EventPublishService(
@@ -26,15 +25,14 @@ class EventPublishService(
     private val kafkaEventCounter: Counter = meterRegistry.counter("kafka_events_created_total", "topic", topic)
 
     fun publishEventAsync(
-        event: Event, userAgent: String, excludeFilters: String?, clientRegion: String?, clientCity: String?
+        event: Event, userAgent: String, excludeFilters: String?, forwardedFor: String?
     ): CompletableFuture<SendResult<String, Event>> {
         kafkaEventCounter.increment()
 
         val key = UUID.randomUUID().toString()
         val record = ProducerRecord(topic, key, event).apply {
             headers().add(USER_AGENT, userAgent.toByteArray(UTF_8))
-            clientRegion?.takeIf { it.isNotBlank() }?.let { headers().add(X_CLIENT_REGION, it.toByteArray(UTF_8)) }
-            clientCity?.takeIf { it.isNotBlank() }?.let { headers().add(X_CLIENT_CITY, it.toByteArray(UTF_8)) }
+            forwardedFor?.takeIf { it.isNotBlank() }?.let { headers().add(FORWARDED_FOR, it.toByteArray(UTF_8)) }
             excludeFilters?.takeIf { it.isNotBlank() }?.let { headers().add(EXCLUDE_FILTERS, it.toByteArray(UTF_8)) }
         }
 
