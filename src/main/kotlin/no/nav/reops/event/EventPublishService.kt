@@ -8,9 +8,13 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
 import org.springframework.stereotype.Service
-import java.nio.charset.StandardCharsets
-import java.util.*
+import java.nio.charset.StandardCharsets.UTF_8
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
+
+const val USER_AGENT = "User-Agent"
+const val EXCLUDE_FILTERS = "X-Exclude-Filters"
+const val X_CLIENT_REGION = "X-Client-Region"
 
 @Service
 class EventPublishService(
@@ -21,26 +25,26 @@ class EventPublishService(
     private val kafkaEventCounter: Counter = meterRegistry.counter("kafka_events_created_total", "topic", topic)
 
     fun publishEventAsync(
-        event: Event, userAgent: String, excludeFilters: String?
+        event: Event, userAgent: String, excludeFilters: String?, clientRegion: String
     ): CompletableFuture<SendResult<String, Event>> {
         kafkaEventCounter.increment()
+
         val key = UUID.randomUUID().toString()
-        val record = ProducerRecord(topic, key, event)
-        record.headers().add(USER_AGENT, userAgent.toByteArray(StandardCharsets.UTF_8))
-        if (excludeFilters != null) {
-            record.headers().add(EXCLUDE_FILTERS, excludeFilters.toByteArray(StandardCharsets.UTF_8))
+        val record = ProducerRecord(topic, key, event).apply {
+            headers().add(USER_AGENT, userAgent.toByteArray(UTF_8))
+            headers().add(X_CLIENT_REGION, clientRegion.toByteArray(UTF_8))
+            excludeFilters?.takeIf { it.isNotBlank() }?.let { headers().add(EXCLUDE_FILTERS, it.toByteArray(UTF_8)) }
         }
 
-        val future = kafkaTemplate.send(record)
-        future.whenComplete { _, ex ->
-            if (ex == null) {
-                LOG.info("Kafka publish ok topic={} key={}", topic, key)
-            } else {
-                LOG.warn("Kafka publish failed topic={} key={} msg={}", topic, key, ex.message)
+        return kafkaTemplate.send(record).also { future ->
+            future.whenComplete { _, ex ->
+                if (ex == null) {
+                    LOG.info("Kafka publish ok topic={} key={}", topic, key)
+                } else {
+                    LOG.warn("Kafka publish failed topic={} key={} msg={}", topic, key, ex.message)
+                }
             }
         }
-
-        return future
     }
 
     private companion object {

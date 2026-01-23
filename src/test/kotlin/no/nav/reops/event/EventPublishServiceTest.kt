@@ -30,12 +30,13 @@ class EventPublishServiceTest {
 
         val event = mock<Event>()
         val userAgent = "KakeAgent/1.0"
+        val clientRegion = "Vestland"
 
         val sendFuture: CompletableFuture<SendResult<String, Event>> = CompletableFuture()
         val recordCaptor = argumentCaptor<ProducerRecord<String, Event>>()
         whenever(kafkaTemplate.send(any<ProducerRecord<String, Event>>())).thenReturn(sendFuture)
 
-        val returnedFuture = service.publishEventAsync(event, userAgent, "filter1,filter2")
+        val returnedFuture = service.publishEventAsync(event, userAgent, "filter1,filter2", clientRegion)
         verify(kafkaTemplate, times(1)).send(recordCaptor.capture())
 
         val record = recordCaptor.firstValue
@@ -43,9 +44,13 @@ class EventPublishServiceTest {
         assertNotNull(record.key())
         assertEquals(event, record.value())
 
-        val header = record.headers().lastHeader("User-Agent")
+        val header = record.headers().lastHeader(USER_AGENT)
         assertNotNull(header)
-        assertEquals(userAgent, header.value().toString(StandardCharsets.UTF_8))
+        assertEquals(userAgent, header!!.value().toString(StandardCharsets.UTF_8))
+
+        val regionHeader = record.headers().lastHeader(X_CLIENT_REGION)
+        assertNotNull(regionHeader)
+        assertEquals(clientRegion, regionHeader!!.value().toString(StandardCharsets.UTF_8))
 
         sendFuture.complete(mock())
         assertEquals(sendFuture, returnedFuture)
@@ -62,10 +67,11 @@ class EventPublishServiceTest {
 
         val event = mock<Event>()
         val userAgent = "JUnit/5"
+        val clientRegion = "Nordland"
         val sendFuture: CompletableFuture<SendResult<String, Event>> = CompletableFuture()
         whenever(kafkaTemplate.send(any<ProducerRecord<String, Event>>())).thenReturn(sendFuture)
 
-        val returnedFuture = service.publishEventAsync(event, userAgent, "filter1,filter2")
+        val returnedFuture = service.publishEventAsync(event, userAgent, "filter1,filter2", clientRegion)
         sendFuture.completeExceptionally(IllegalStateException("boom"))
         assertEquals(sendFuture, returnedFuture)
     }
