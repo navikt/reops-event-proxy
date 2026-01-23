@@ -19,7 +19,6 @@ class EventController(
     @PostMapping("/api/send")
     fun sendEvent(
         @RequestBody event: Event,
-        @RequestHeader headers: Map<String, String>,
         @RequestHeader(USER_AGENT, required = false) userAgent: String?,
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
         @RequestHeader(X_CLIENT_REGION, required = false) clientRegion: String?,
@@ -27,10 +26,6 @@ class EventController(
     ): CompletableFuture<ResponseEntity<Response>> {
         val sanitized = event.sanitizeForKafkaWithReport()
         recordTruncationMetrics(sanitized.truncationReport)
-
-        headers.forEach { (key, value) ->
-            LOG.info("$key: $value")
-        }
 
         val safeUserAgent = userAgent?.trim().takeUnless { it.isNullOrEmpty() } ?: ""
         val safeExcludeFilters = excludeFilters?.trim().takeUnless { it.isNullOrEmpty() }
