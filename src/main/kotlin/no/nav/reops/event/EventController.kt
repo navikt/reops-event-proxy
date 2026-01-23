@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import no.nav.reops.truncation.TruncationReport
 import no.nav.reops.truncation.sanitizeForKafkaWithReport
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -11,13 +12,14 @@ import java.util.concurrent.CompletableFuture
 
 @CrossOrigin(value = ["*"], allowedHeaders = ["*"], methods = [RequestMethod.POST, RequestMethod.OPTIONS])
 @RestController
-class Controller(
+class EventController(
     private val eventPublishService: EventPublishService, private val meterRegistry: MeterRegistry
 ) {
 
     @PostMapping("/api/send")
     fun sendEvent(
         @RequestBody event: Event,
+        @RequestHeader headers: Map<String, String>,
         @RequestHeader(USER_AGENT, required = false) userAgent: String?,
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
         @RequestHeader(X_CLIENT_REGION, required = false) clientRegion: String?,
@@ -25,6 +27,10 @@ class Controller(
     ): CompletableFuture<ResponseEntity<Response>> {
         val sanitized = event.sanitizeForKafkaWithReport()
         recordTruncationMetrics(sanitized.truncationReport)
+
+        headers.forEach { (key, value) ->
+            LOG.info("$key: $value")
+        }
 
         val safeUserAgent = userAgent?.trim().takeUnless { it.isNullOrEmpty() } ?: ""
         val safeExcludeFilters = excludeFilters?.trim().takeUnless { it.isNullOrEmpty() }
@@ -48,6 +54,10 @@ class Controller(
         report?.violations?.map { it.field }?.distinct()?.forEach { field ->
             Counter.builder("truncations_by_field_total").tag("field", field).register(meterRegistry).increment()
         }
+    }
+
+    private companion object {
+        private val LOG = LoggerFactory.getLogger(EventController::class.java)
     }
 }
 
