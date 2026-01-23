@@ -14,7 +14,7 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.whenever
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
-import java.nio.charset.StandardCharsets
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.CompletableFuture
 
 class EventPublishServiceTest {
@@ -26,17 +26,27 @@ class EventPublishServiceTest {
         val meterRegistry = mock<MeterRegistry>()
         val counter = mock<Counter>()
         whenever(meterRegistry.counter("kafka_events_created_total", "topic", topic)).thenReturn(counter)
+
         val service = EventPublishService(kafkaTemplate, meterRegistry, topic)
 
         val event = mock<Event>()
         val userAgent = "KakeAgent/1.0"
-        val clientRegion = "Vestland"
+        val clientRegion = "NO"
+        val clientCity = "Oslo"
+        val excludeFilters = "filter1,filter2"
 
         val sendFuture: CompletableFuture<SendResult<String, Event>> = CompletableFuture()
         val recordCaptor = argumentCaptor<ProducerRecord<String, Event>>()
         whenever(kafkaTemplate.send(any<ProducerRecord<String, Event>>())).thenReturn(sendFuture)
 
-        val returnedFuture = service.publishEventAsync(event, userAgent, "filter1,filter2", clientRegion)
+        val returnedFuture = service.publishEventAsync(
+            event = event,
+            userAgent = userAgent,
+            excludeFilters = excludeFilters,
+            clientRegion = clientRegion,
+            clientCity = clientCity
+        )
+
         verify(kafkaTemplate, times(1)).send(recordCaptor.capture())
 
         val record = recordCaptor.firstValue
@@ -44,13 +54,21 @@ class EventPublishServiceTest {
         assertNotNull(record.key())
         assertEquals(event, record.value())
 
-        val header = record.headers().lastHeader(USER_AGENT)
-        assertNotNull(header)
-        assertEquals(userAgent, header!!.value().toString(StandardCharsets.UTF_8))
+        val uaHeader = record.headers().lastHeader(USER_AGENT)
+        assertNotNull(uaHeader)
+        assertEquals(userAgent, uaHeader!!.value().toString(UTF_8))
 
         val regionHeader = record.headers().lastHeader(X_CLIENT_REGION)
         assertNotNull(regionHeader)
-        assertEquals(clientRegion, regionHeader!!.value().toString(StandardCharsets.UTF_8))
+        assertEquals(clientRegion, regionHeader!!.value().toString(UTF_8))
+
+        val cityHeader = record.headers().lastHeader(X_CLIENT_CITY)
+        assertNotNull(cityHeader)
+        assertEquals(clientCity, cityHeader!!.value().toString(UTF_8))
+
+        val excludeHeader = record.headers().lastHeader(EXCLUDE_FILTERS)
+        assertNotNull(excludeHeader)
+        assertEquals(excludeFilters, excludeHeader!!.value().toString(UTF_8))
 
         sendFuture.complete(mock())
         assertEquals(sendFuture, returnedFuture)
@@ -63,15 +81,26 @@ class EventPublishServiceTest {
         val meterRegistry = mock<MeterRegistry>()
         val counter = mock<Counter>()
         whenever(meterRegistry.counter("kafka_events_created_total", "topic", topic)).thenReturn(counter)
+
         val service = EventPublishService(kafkaTemplate, meterRegistry, topic)
 
         val event = mock<Event>()
         val userAgent = "JUnit/5"
-        val clientRegion = "Nordland"
+        val clientRegion = "NO"
+        val clientCity = "Oslo"
+        val excludeFilters = "filter1,filter2"
+
         val sendFuture: CompletableFuture<SendResult<String, Event>> = CompletableFuture()
         whenever(kafkaTemplate.send(any<ProducerRecord<String, Event>>())).thenReturn(sendFuture)
 
-        val returnedFuture = service.publishEventAsync(event, userAgent, "filter1,filter2", clientRegion)
+        val returnedFuture = service.publishEventAsync(
+            event = event,
+            userAgent = userAgent,
+            excludeFilters = excludeFilters,
+            clientRegion = clientRegion,
+            clientCity = clientCity
+        )
+
         sendFuture.completeExceptionally(IllegalStateException("boom"))
         assertEquals(sendFuture, returnedFuture)
     }

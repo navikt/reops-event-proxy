@@ -20,17 +20,23 @@ class Controller(
         @RequestBody event: Event,
         @RequestHeader(USER_AGENT, required = false) userAgent: String?,
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
-        @RequestHeader(X_CLIENT_REGION, required = false) clientRegion: String?
+        @RequestHeader(X_CLIENT_REGION, required = false) clientRegion: String?,
+        @RequestHeader(X_CLIENT_CITY, required = false) clientCity: String?
     ): CompletableFuture<ResponseEntity<Response>> {
         val sanitized = event.sanitizeForKafkaWithReport()
         recordTruncationMetrics(sanitized.truncationReport)
 
-        val safeUserAgent = userAgent?.takeIf { it.isNotBlank() } ?: ""
-        val safeExcludeFilters = excludeFilters?.takeIf { it.isNotBlank() }
-        val safeClientRegion = clientRegion?.takeIf { it.isNotBlank() } ?: ""
+        val safeUserAgent = userAgent?.trim().takeUnless { it.isNullOrEmpty() } ?: ""
+        val safeExcludeFilters = excludeFilters?.trim().takeUnless { it.isNullOrEmpty() }
+        val safeClientRegion = clientRegion?.trim().takeUnless { it.isNullOrEmpty() }
+        val safeClientCity = clientCity?.trim().takeUnless { it.isNullOrEmpty() }
 
         return eventPublishService.publishEventAsync(
-            sanitized.event, safeUserAgent, safeExcludeFilters, safeClientRegion
+            event = sanitized.event,
+            userAgent = safeUserAgent,
+            excludeFilters = safeExcludeFilters,
+            clientRegion = safeClientRegion,
+            clientCity = safeClientCity
         ).thenApply {
             ResponseEntity.status(HttpStatus.CREATED).body(
                 Response("Created", 201, sanitized.truncationReport)
@@ -40,8 +46,8 @@ class Controller(
 
     private fun recordTruncationMetrics(report: TruncationReport?) {
         report?.violations?.map { it.field }?.distinct()?.forEach { field ->
-                Counter.builder("truncations_by_field_total").tag("field", field).register(meterRegistry).increment()
-            }
+            Counter.builder("truncations_by_field_total").tag("field", field).register(meterRegistry).increment()
+        }
     }
 }
 
