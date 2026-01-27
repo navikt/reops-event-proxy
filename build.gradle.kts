@@ -35,7 +35,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
 
 	testImplementation("org.springframework.kafka:spring-kafka-test")
-	testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.2")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.3")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 }
 
