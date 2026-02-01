@@ -25,11 +25,11 @@ spec:
     path: /internal/prometheus
   resources:
     limits:
-      cpu: "500m"
-      memory: 2048Mi
-    requests:
-      cpu: "100m"
+      cpu: "1000m"
       memory: 1024Mi
+    requests:
+      cpu: "200m"
+      memory: 512Mi
   kafka:
     pool: nav-dev
   accessPolicy:
@@ -39,3 +39,9 @@ spec:
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: kubernetes
+    - name: JAVA_TOOL_OPTIONS
+      value: >-
+        -XX:+UseZGC
+        -XX:MaxRAMPercentage=70
+        -XX:InitialRAMPercentage=50
+        -XX:+ExitOnOutOfMemoryError
