@@ -22,12 +22,17 @@ class EventPublishService(
     meterRegistry: MeterRegistry,
     @Value("\${spring.kafka.topic}") private val topic: String
 ) {
-    private val kafkaEventCounter: Counter = meterRegistry.counter("kafka_events_created_total", "topic", topic)
+    private val created: Counter = meterRegistry.counter("kafka_events_created_total", "topic", topic)
+    private val ok: Counter = meterRegistry.counter("kafka_events_publish_ok_total", "topic", topic)
+    private val fail: Counter = meterRegistry.counter("kafka_events_publish_fail_total", "topic", topic)
 
     fun publishEventAsync(
-        event: Event, userAgent: String, excludeFilters: String?, forwardedFor: String?
+        event: Event,
+        userAgent: String,
+        excludeFilters: String?,
+        forwardedFor: String?
     ): CompletableFuture<SendResult<String, Event>> {
-        kafkaEventCounter.increment()
+        created.increment()
 
         val key = UUID.randomUUID().toString()
         val record = ProducerRecord(topic, key, event).apply {
@@ -36,13 +41,12 @@ class EventPublishService(
             excludeFilters?.takeIf { it.isNotBlank() }?.let { headers().add(EXCLUDE_FILTERS, it.toByteArray(UTF_8)) }
         }
 
-        return kafkaTemplate.send(record).also { future ->
-            future.whenComplete { _, ex ->
-                if (ex == null) {
-                    LOG.info("Kafka publish ok topic={} key={}", topic, key)
-                } else {
-                    LOG.warn("Kafka publish failed topic={} key={} msg={}", topic, key, ex.message)
-                }
+        return kafkaTemplate.send(record).whenComplete { _, ex ->
+            if (ex == null) {
+                ok.increment()
+            } else {
+                fail.increment()
+                LOG.warn("Kafka publish failed topic={} key={} msg={}", topic, key, ex.message)
             }
         }
     }

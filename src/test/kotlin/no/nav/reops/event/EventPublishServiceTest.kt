@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.any
+import org.mockito.Mockito.doReturn
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
@@ -25,7 +26,9 @@ class EventPublishServiceTest {
         val topic = "test-topic"
         val meterRegistry = mock<MeterRegistry>()
         val counter = mock<Counter>()
-        whenever(meterRegistry.counter("kafka_events_created_total", "topic", topic)).thenReturn(counter)
+        doReturn(counter).whenever(meterRegistry).counter("kafka_events_created_total", "topic", topic)
+        doReturn(counter).whenever(meterRegistry).counter("kafka_events_publish_ok_total", "topic", topic)
+        doReturn(counter).whenever(meterRegistry).counter("kafka_events_publish_fail_total", "topic", topic)
 
         val service = EventPublishService(kafkaTemplate, meterRegistry, topic)
 
@@ -64,8 +67,12 @@ class EventPublishServiceTest {
         assertNotNull(excludeHeader)
         assertEquals(excludeFilters, excludeHeader!!.value().toString(UTF_8))
 
-        sendFuture.complete(mock())
-        assertEquals(sendFuture, returnedFuture)
+        // Complete the future and verify the returned future completes
+        val mockSendResult = mock<SendResult<String, Event>>()
+        sendFuture.complete(mockSendResult)
+
+        // Verify the returned future completes successfully
+        assertNotNull(returnedFuture.get())
     }
 
     @Test
@@ -74,7 +81,9 @@ class EventPublishServiceTest {
         val topic = "test-topic"
         val meterRegistry = mock<MeterRegistry>()
         val counter = mock<Counter>()
-        whenever(meterRegistry.counter("kafka_events_created_total", "topic", topic)).thenReturn(counter)
+        doReturn(counter).whenever(meterRegistry).counter("kafka_events_created_total", "topic", topic)
+        doReturn(counter).whenever(meterRegistry).counter("kafka_events_publish_ok_total", "topic", topic)
+        doReturn(counter).whenever(meterRegistry).counter("kafka_events_publish_fail_total", "topic", topic)
 
         val service = EventPublishService(kafkaTemplate, meterRegistry, topic)
 
@@ -94,6 +103,14 @@ class EventPublishServiceTest {
         )
 
         sendFuture.completeExceptionally(IllegalStateException("boom"))
-        assertEquals(sendFuture, returnedFuture)
+
+        // Verify the returned future completes exceptionally
+        try {
+            returnedFuture.get()
+            throw AssertionError("Expected future to complete exceptionally")
+        } catch (e: Exception) {
+            // Expected - future should complete exceptionally
+            assertNotNull(e)
+        }
     }
 }
