@@ -4,6 +4,14 @@ spring:
   kafka:
     bootstrap-servers: localhost:9094
     topic: test2
+    producer:
+      properties:
+        linger.ms: 50                     # wait up to 50ms to batch messages:contentReference[oaicite:7]{index=7}:contentReference[oaicite:8]{index=8}
+        batch.size: 131072                # 128KB batch size max (improved throughput with larger batches):contentReference[oaicite:9]{index=9}:contentReference[oaicite:10]{index=10}
+        compression.type: lz4            # compress full batches with LZ4 (high-throughput compression):contentReference[oaicite:11]{index=11}
+        acks: 1                         # leader-only acknowledgments for lower latency (risk: loss on leader failure):contentReference[oaicite:12]{index=12}
+        enable.idempotence: false       # disable idempotence to allow higher in-flight requests
+        max.in.flight.requests.per.connection: 10  # allow up to 10 inflight requests (trading off ordering guarantees):contentReference[oaicite:13]{index=13}
   main:
     banner-mode: off
     web-application-type: reactive
@@ -14,6 +22,8 @@ spring:
     default-property-inclusion: non_null
 
 server:
+  http2:
+    enabled: true
   port: 8080
 
 management:

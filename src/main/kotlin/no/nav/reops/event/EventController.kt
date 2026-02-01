@@ -22,7 +22,7 @@ class EventController(
         @RequestHeader(USER_AGENT, required = false) userAgent: String?,
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
         @RequestHeader(FORWARDED_FOR, required = false) forwardedFor: String?,
-    ): CompletableFuture<ResponseEntity<Response>> {
+    ): ResponseEntity<Response> {
         val sanitized = event.sanitizeForKafkaWithReport()
         recordTruncationMetrics(sanitized.truncationReport)
 
@@ -30,26 +30,22 @@ class EventController(
         val safeExcludeFilters = excludeFilters?.trim().takeUnless { it.isNullOrEmpty() }
         val safeForwardedFor = forwardedFor?.trim().takeUnless { it.isNullOrEmpty() }
 
-        return eventPublishService.publishEventAsync(
+        eventPublishService.publishEventAsync(
             event = sanitized.event,
             userAgent = safeUserAgent,
             excludeFilters = safeExcludeFilters,
             forwardedFor = safeForwardedFor
-        ).thenApply {
-            ResponseEntity.status(HttpStatus.CREATED).body(
-                Response("Created", 201, sanitized.truncationReport)
-            )
-        }
+        )
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+            Response("Created", 201, sanitized.truncationReport)
+        )
     }
 
     private fun recordTruncationMetrics(report: TruncationReport?) {
         report?.violations?.map { it.field }?.distinct()?.forEach { field ->
             Counter.builder("truncations_by_field_total").tag("field", field).register(meterRegistry).increment()
         }
-    }
-
-    private companion object {
-        private val LOG = LoggerFactory.getLogger(EventController::class.java)
     }
 }
 
