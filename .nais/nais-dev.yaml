@@ -15,7 +15,7 @@ spec:
     path: /internal/health
     initialDelay: 5
   replicas:
-    min: 1
+    min: 2
     max: 4
     cpuThresholdPercentage: 80
   ingresses:

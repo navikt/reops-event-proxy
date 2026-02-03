@@ -12,7 +12,7 @@ spec:
   config:
     cleanupPolicy: delete
     minimumInSyncReplicas: 1
-    partitions: 1
+    partitions: 4
     retentionHours: 1
   acl:
     - team: team-researchops
