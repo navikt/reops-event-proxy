@@ -14,12 +14,26 @@ class KafkaWarmupConfig(
 
     @Bean
     fun kafkaWarmupRunner(): ApplicationRunner = ApplicationRunner {
-        try {
-            val producer = kafkaTemplate.producerFactory.createProducer()
-            producer.use { p -> p.partitionsFor(topic) }
-            LOG.info("Kafka producer warmup ok for topic={}", topic)
-        } catch (ex: Exception) {
-            LOG.warn("Kafka producer warmup failed for topic={} msg={}", topic, ex.message)
+        var attempts = 0
+        val maxAttempts = 5
+        var delayMs = 100L
+
+        while (attempts < maxAttempts) {
+            try {
+                val producer = kafkaTemplate.producerFactory.createProducer()
+                producer.use { p -> p.partitionsFor(topic) }
+                LOG.info("Kafka producer warmup ok for topic={} after {} attempt(s)", topic, attempts + 1)
+                return@ApplicationRunner
+            } catch (ex: Exception) {
+                attempts++
+                if (attempts >= maxAttempts) {
+                    LOG.warn("Kafka producer warmup failed for topic={} after {} attempts. msg={}", topic, maxAttempts, ex.message)
+                } else {
+                    LOG.debug("Kafka producer warmup attempt {}/{} failed for topic={}, retrying in {}ms", attempts, maxAttempts, topic, delayMs)
+                    Thread.sleep(delayMs)
+                    delayMs *= 2
+                }
+            }
         }
     }
 

@@ -71,6 +71,20 @@ services:
     cpus: 0.5
     mem_limit: 2g
 
+  # -- Kafka Topic Init --
+#  kafka-init: # Uncomment to create additional topics at startup instead of auto create from application
+#    image: docker.io/apache/kafka:4.1.1
+#    container_name: kafka-init
+#    depends_on:
+#      broker-1:
+#        condition: service_healthy
+#    entrypoint: ["/bin/sh", "-c"]
+#    command:
+#      - |
+#        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic test2 --partitions 3 --replication-factor 1 --bootstrap-server broker-1:9092
+#        echo "Topic 'test2' created with 3 partitions"
+#    restart: "no"
+
   # --- Kafka UI ---
   kafka-ui:
     image: ghcr.io/kafbat/kafka-ui:v1.4.2
@@ -130,12 +144,8 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_SERVER_ROOT_URL: http://localhost:3001
-      GF_DATASOURCES_DEFAULT_NAME: Prometheus
-      GF_DATASOURCES_DEFAULT_TYPE: prometheus
-      GF_DATASOURCES_DEFAULT_URL: http://prometheus:9090
-#    volumes:
-#      - grafana_data:/var/lib/grafana
     volumes:
+      - ./grafana/datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
       - ./grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/main.yaml
       - ./grafana/dashboards:/var/lib/grafana/dashboards
     healthcheck:
@@ -173,7 +183,7 @@ services:
 
   # -- Umami --
   umami:
-    image: ghcr.io/umami-software/umami:latest
+    image: ghcr.io/umami-software/umami:latest #umami-country:latest
     container_name: umami
     restart: unless-stopped
     init: true
@@ -188,6 +198,7 @@ services:
       APP_SECRET: secret
       NODE_OPTIONS: "--max_old_space_size=256"
       DISABLE_BOT_CHECK: "1"
+      SKIP_LOCATION_HEADERS: "1"
     healthcheck:
       test: ["CMD-SHELL", "curl -fs http://localhost:3000/api/heartbeat || exit 1"]
       interval: 60s

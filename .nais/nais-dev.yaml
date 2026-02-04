@@ -20,6 +20,7 @@ spec:
     cpuThresholdPercentage: 80
   ingresses:
     - "https://reops-event-proxy.intern.dev.nav.no"
+    - "https://reops-event-proxy.dev.nav.no"
   prometheus:
     enabled: true
     path: /internal/prometheus

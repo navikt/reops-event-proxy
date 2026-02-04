@@ -7,11 +7,11 @@ scrape_configs:
       - targets: ['localhost:9090']
   - job_name: 'reops-in-data-proxy'
     metrics_path: '/internal/prometheus'
-    scrape_interval: 15s
+    scrape_interval: 5s
     static_configs:
       - targets: [ 'host.docker.internal:8084']
   - job_name: 'reops-data-filter'
     metrics_path: '/internal/prometheus'
-    scrape_interval: 15s
+    scrape_interval: 5s
     static_configs:
       - targets: [ 'host.docker.internal:8082']
