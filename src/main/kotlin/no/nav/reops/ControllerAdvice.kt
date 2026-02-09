@@ -18,7 +18,7 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
     @ExceptionHandler(InvalidEventException::class)
     fun handleInvalidEvent(ex: InvalidEventException): ResponseEntity<ErrorResponse> {
         failedRequests.increment()
-        LOG.debug("Invalid event: {}", ex.message)
+        LOG.info("Invalid event: {}", ex.message)
         val body = ErrorResponse(
             error = "INVALID_EVENT",
             message = ex.message ?: "Invalid event payload",
@@ -31,7 +31,7 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
     fun handleDecodingException(ex: ServerWebInputException): ResponseEntity<ErrorResponse> {
         failedRequests.increment()
         val message = "Invalid format in request body"
-        LOG.debug("Invalid format: {}", ex.message)
+        LOG.info("Invalid format: {}", ex.message)
         val body = ErrorResponse(
             error = "INVALID_FORMAT", message = message, status = HttpStatus.BAD_REQUEST.value()
         )

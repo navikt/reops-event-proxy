@@ -16,7 +16,7 @@ class KafkaWarmupConfig(
     fun kafkaWarmupRunner(): ApplicationRunner = ApplicationRunner {
         var attempts = 0
         val maxAttempts = 5
-        var delayMs = 100L
+        var delayMs = 250L
 
         while (attempts < maxAttempts) {
             try {
