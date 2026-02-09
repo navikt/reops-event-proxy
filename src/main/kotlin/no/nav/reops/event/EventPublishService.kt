@@ -22,18 +22,12 @@ class EventPublishService(
     meterRegistry: MeterRegistry,
     @Value("\${spring.kafka.topic}") private val topic: String
 ) {
-    private val created: Counter = meterRegistry.counter("kafka_events_created_total", "topic", topic)
-    private val ok: Counter = meterRegistry.counter("kafka_events_publish_ok_total", "topic", topic)
-    private val fail: Counter = meterRegistry.counter("kafka_events_publish_fail_total", "topic", topic)
+    private val kafkaCreated: Counter = meterRegistry.counter("kafka_events_total", "result", "created")
+    private val kafkaFailure: Counter = meterRegistry.counter("kafka_events_total", "result", "failure")
 
     fun publishEventAsync(
-        event: Event,
-        userAgent: String,
-        excludeFilters: String?,
-        forwardedFor: String?
+        event: Event, userAgent: String, excludeFilters: String?, forwardedFor: String?
     ): CompletableFuture<SendResult<String, Event>> {
-        created.increment()
-
         val key = UUID.randomUUID().toString()
         val record = ProducerRecord(topic, key, event).apply {
             headers().add(USER_AGENT, userAgent.toByteArray(UTF_8))
@@ -41,12 +35,22 @@ class EventPublishService(
             excludeFilters?.takeIf { it.isNotBlank() }?.let { headers().add(EXCLUDE_FILTERS, it.toByteArray(UTF_8)) }
         }
 
-        return kafkaTemplate.send(record).whenComplete { _, ex ->
+        return runCatching {
+            kafkaTemplate.send(record)
+        }.getOrElse { ex ->
+            CompletableFuture.failedFuture(ex)
+        }.whenComplete { _, ex ->
             if (ex == null) {
-                ok.increment()
+                kafkaCreated.increment()
             } else {
-                fail.increment()
-                LOG.warn("Kafka publish failed topic={} key={} msg={}", topic, key, ex.message)
+                kafkaFailure.increment()
+                LOG.warn(
+                    "Kafka publish failed topic={} key={} ex={} msg={}",
+                    topic,
+                    key,
+                    ex.javaClass.simpleName,
+                    ex.message?.take(200)
+                )
             }
         }
     }

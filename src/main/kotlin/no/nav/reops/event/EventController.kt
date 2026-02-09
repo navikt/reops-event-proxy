@@ -16,6 +16,8 @@ import java.util.concurrent.ConcurrentHashMap
 class EventController(
     private val eventPublishService: EventPublishService, private val meterRegistry: MeterRegistry
 ) {
+    private val receivedRequests: Counter = meterRegistry.counter("requests_total", "result", "recieved")
+
     private val truncCounters = ConcurrentHashMap<String, Counter>()
     private fun truncCounter(field: String): Counter = truncCounters.computeIfAbsent(field) {
         meterRegistry.counter("truncations_by_field_total", "field", field)
@@ -28,24 +30,25 @@ class EventController(
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
         @RequestHeader(FORWARDED_FOR, required = false) forwardedFor: String?,
     ): Mono<ResponseEntity<Response>> {
+        receivedRequests.increment()
+
         val safeUserAgent = userAgent?.trim().orEmpty()
         val safeExcludeFilters = excludeFilters?.trim().takeUnless { it.isNullOrEmpty() }
         val safeForwardedFor = forwardedFor?.trim().takeUnless { it.isNullOrEmpty() }
 
-        return eventMono
-            .publishOn(Schedulers.boundedElastic()).map { event ->
-                val sanitized = event.sanitizeForKafkaWithReport()
-                recordTruncationMetrics(sanitized.truncationReport)
+        return eventMono.publishOn(Schedulers.boundedElastic()).map { event ->
+            val sanitized = event.sanitizeForKafkaWithReport()
+            recordTruncationMetrics(sanitized.truncationReport)
 
-                eventPublishService.publishEventAsync(
-                    event = sanitized.event,
-                    userAgent = safeUserAgent,
-                    excludeFilters = safeExcludeFilters,
-                    forwardedFor = safeForwardedFor
-                )
+            eventPublishService.publishEventAsync(
+                event = sanitized.event,
+                userAgent = safeUserAgent,
+                excludeFilters = safeExcludeFilters,
+                forwardedFor = safeForwardedFor
+            )
 
-                ResponseEntity.status(HttpStatus.CREATED).body(Response("Created", 201, sanitized.truncationReport))
-            }
+            ResponseEntity.status(HttpStatus.CREATED).body(Response("Created", 201, sanitized.truncationReport))
+        }
     }
 
     private fun recordTruncationMetrics(report: TruncationReport?) {

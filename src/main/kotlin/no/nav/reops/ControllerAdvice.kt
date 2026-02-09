@@ -1,5 +1,7 @@
 package no.nav.reops
 
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
 import no.nav.reops.exception.InvalidEventException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -9,10 +11,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.server.ServerWebInputException
 
 @ControllerAdvice
-class ControlAdvice {
+class ControlAdvice(meterRegistry: MeterRegistry) {
+
+    private val failedRequests: Counter = meterRegistry.counter("requests_total", "result", "failure")
 
     @ExceptionHandler(InvalidEventException::class)
     fun handleInvalidEvent(ex: InvalidEventException): ResponseEntity<ErrorResponse> {
+        failedRequests.increment()
         LOG.debug("Invalid event: {}", ex.message)
         val body = ErrorResponse(
             error = "INVALID_EVENT",
@@ -24,6 +29,7 @@ class ControlAdvice {
 
     @ExceptionHandler(ServerWebInputException::class)
     fun handleDecodingException(ex: ServerWebInputException): ResponseEntity<ErrorResponse> {
+        failedRequests.increment()
         val message = "Invalid format in request body"
         LOG.debug("Invalid format: {}", ex.message)
         val body = ErrorResponse(
@@ -34,6 +40,7 @@ class ControlAdvice {
 
     @ExceptionHandler(Exception::class)
     fun handleGeneralException(ex: Exception): ResponseEntity<ErrorResponse> {
+        failedRequests.increment()
         LOG.error("Unexpected error", ex)
         val body = ErrorResponse(
             error = "INTERNAL_ERROR", message = "Unexpected error", status = HttpStatus.INTERNAL_SERVER_ERROR.value()

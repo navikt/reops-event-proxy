@@ -11,6 +11,7 @@ import org.mockito.Mockito.doReturn
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.whenever
 import org.springframework.kafka.core.KafkaTemplate
@@ -25,10 +26,11 @@ class EventPublishServiceTest {
         val kafkaTemplate = mock<KafkaTemplate<String, Event>>()
         val topic = "test-topic"
         val meterRegistry = mock<MeterRegistry>()
-        val counter = mock<Counter>()
-        doReturn(counter).whenever(meterRegistry).counter("kafka_events_created_total", "topic", topic)
-        doReturn(counter).whenever(meterRegistry).counter("kafka_events_publish_ok_total", "topic", topic)
-        doReturn(counter).whenever(meterRegistry).counter("kafka_events_publish_fail_total", "topic", topic)
+
+        val createdCounter = mock<Counter>()
+        val failureCounter = mock<Counter>()
+        doReturn(createdCounter).whenever(meterRegistry).counter("kafka_events_total", "result", "created")
+        doReturn(failureCounter).whenever(meterRegistry).counter("kafka_events_total", "result", "failure")
 
         val service = EventPublishService(kafkaTemplate, meterRegistry, topic)
 
@@ -59,9 +61,9 @@ class EventPublishServiceTest {
         assertNotNull(uaHeader)
         assertEquals(userAgent, uaHeader!!.value().toString(UTF_8))
 
-        val regionHeader = record.headers().lastHeader(FORWARDED_FOR)
-        assertNotNull(regionHeader)
-        assertEquals(forwardedFor, regionHeader!!.value().toString(UTF_8))
+        val forwardedForHeader = record.headers().lastHeader(FORWARDED_FOR)
+        assertNotNull(forwardedForHeader)
+        assertEquals(forwardedFor, forwardedForHeader!!.value().toString(UTF_8))
 
         val excludeHeader = record.headers().lastHeader(EXCLUDE_FILTERS)
         assertNotNull(excludeHeader)
@@ -71,8 +73,11 @@ class EventPublishServiceTest {
         val mockSendResult = mock<SendResult<String, Event>>()
         sendFuture.complete(mockSendResult)
 
-        // Verify the returned future completes successfully
         assertNotNull(returnedFuture.get())
+
+        // Metrics
+        verify(createdCounter, times(1)).increment()
+        verifyNoInteractions(failureCounter)
     }
 
     @Test
@@ -80,10 +85,11 @@ class EventPublishServiceTest {
         val kafkaTemplate = mock<KafkaTemplate<String, Event>>()
         val topic = "test-topic"
         val meterRegistry = mock<MeterRegistry>()
-        val counter = mock<Counter>()
-        doReturn(counter).whenever(meterRegistry).counter("kafka_events_created_total", "topic", topic)
-        doReturn(counter).whenever(meterRegistry).counter("kafka_events_publish_ok_total", "topic", topic)
-        doReturn(counter).whenever(meterRegistry).counter("kafka_events_publish_fail_total", "topic", topic)
+
+        val createdCounter = mock<Counter>()
+        val failureCounter = mock<Counter>()
+        doReturn(createdCounter).whenever(meterRegistry).counter("kafka_events_total", "result", "created")
+        doReturn(failureCounter).whenever(meterRegistry).counter("kafka_events_total", "result", "failure")
 
         val service = EventPublishService(kafkaTemplate, meterRegistry, topic)
 
@@ -104,13 +110,14 @@ class EventPublishServiceTest {
 
         sendFuture.completeExceptionally(IllegalStateException("boom"))
 
-        // Verify the returned future completes exceptionally
         try {
             returnedFuture.get()
             throw AssertionError("Expected future to complete exceptionally")
         } catch (e: Exception) {
-            // Expected - future should complete exceptionally
             assertNotNull(e)
         }
+
+        verify(failureCounter, times(1)).increment()
+        verifyNoInteractions(createdCounter)
     }
 }

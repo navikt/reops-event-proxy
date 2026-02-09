@@ -1,6 +1,6 @@
 spring:
   application:
-    name: reops-data-filter-test
+    name: reops-event-proxy-test
   kafka:
     topic: test-topic
     bootstrap-servers: ${spring.embedded.kafka.brokers}
