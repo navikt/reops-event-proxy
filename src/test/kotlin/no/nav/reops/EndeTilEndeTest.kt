@@ -8,14 +8,17 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.http.MediaType
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer
 import org.springframework.kafka.test.EmbeddedKafkaBroker
 import org.springframework.kafka.test.context.EmbeddedKafka
+import org.springframework.kafka.test.utils.ContainerTestUtils
 import org.springframework.kafka.test.utils.KafkaTestUtils
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -34,6 +37,17 @@ class EndeTilEndeTest {
 
     @Autowired
     private lateinit var embeddedKafka: EmbeddedKafkaBroker
+
+    @Autowired
+    lateinit var registry: KafkaListenerEndpointRegistry
+
+    @BeforeEach
+    fun waitForKafkaListener() {
+        // Wait until the @KafkaListener container has partitions assigned
+        registry.listenerContainers.forEach { container ->
+            ContainerTestUtils.waitForAssignment(container, 1)
+        }
+    }
 
     private fun webTestClient(): WebTestClient = WebTestClient.bindToServer().baseUrl("http://localhost:$port").build()
 

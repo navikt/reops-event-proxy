@@ -12,6 +12,7 @@ data class Event(
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class Payload(
         val website: UUID,
+        @field:JsonInclude(JsonInclude.Include.NON_NULL) val id: String? = null,
         @field:JsonInclude(JsonInclude.Include.NON_NULL) val hostname: String? = null,
         @field:JsonInclude(JsonInclude.Include.NON_NULL) val screen: String? = null,
         @field:JsonInclude(JsonInclude.Include.NON_NULL) val language: String? = null,

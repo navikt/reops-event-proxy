@@ -33,6 +33,7 @@ fun Event.sanitizeForKafkaWithReport(): SanitizedEvent {
     val normalized = copy(
         type = type.trim(), payload = payload.copy(
             website = payload.website,
+            id = payload.id.nullIfBlank(),
             hostname = payload.hostname.nullIfBlank(),
             screen = payload.screen.nullIfBlank(),
             language = payload.language.nullIfBlank(),
@@ -50,6 +51,9 @@ fun Event.sanitizeForKafkaWithReport(): SanitizedEvent {
         type = trunkCollector.truncateMarked("type", normalized.type),
         payload = Event.Payload(
             website = normalized.payload.website,
+            id = normalized.payload.id?.let {
+                trunkCollector.truncateMarked("payload.id", it)
+            },
             hostname = normalized.payload.hostname?.let {
                 trunkCollector.truncateMarked("payload.hostname", it)
             },
