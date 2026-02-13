@@ -45,9 +45,10 @@ class EventPublishService(
             } else {
                 kafkaFailure.increment()
                 LOG.warn(
-                    "Kafka publish failed topic={} key={} ex={} msg={}",
+                    "Kafka publish failed topic={} key={} website={} ex={} msg={}",
                     topic,
                     key,
+                    event.payload.website,
                     ex.javaClass.simpleName,
                     ex.message?.take(200)
                 )

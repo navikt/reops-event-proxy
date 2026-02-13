@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import no.nav.reops.truncation.TruncationReport
 import no.nav.reops.truncation.sanitizeForKafkaWithReport
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -38,6 +39,7 @@ class EventController(
 
         return eventMono.publishOn(Schedulers.boundedElastic()).map { event ->
             val sanitized = event.sanitizeForKafkaWithReport()
+            LOG.info("Received event website={}", event.payload.website)
             recordTruncationMetrics(sanitized.truncationReport)
 
             eventPublishService.publishEventAsync(
@@ -53,6 +55,10 @@ class EventController(
 
     private fun recordTruncationMetrics(report: TruncationReport?) {
         report?.violations?.asSequence()?.map { it.field }?.distinct()?.forEach { truncCounter(it).increment() }
+    }
+
+    private companion object {
+        private val LOG = LoggerFactory.getLogger(EventController::class.java)
     }
 }
 
