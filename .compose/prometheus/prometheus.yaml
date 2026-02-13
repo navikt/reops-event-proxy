@@ -9,9 +9,9 @@ scrape_configs:
     metrics_path: '/internal/prometheus'
     scrape_interval: 5s
     static_configs:
-      - targets: [ 'host.docker.internal:8082']
+      - targets: [ 'host.docker.internal:8084']
   - job_name: 'reops-umami-consumer'
     metrics_path: '/internal/prometheus'
     scrape_interval: 5s
     static_configs:
-      - targets: [ 'host.docker.internal:8084']
+      - targets: [ 'host.docker.internal:8082']

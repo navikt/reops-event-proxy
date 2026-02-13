@@ -16,16 +16,12 @@ import java.util.concurrent.ConcurrentHashMap
 class EventController(
     private val eventPublishService: EventPublishService, private val meterRegistry: MeterRegistry
 ) {
-    private val receivedCounters = ConcurrentHashMap<String, Counter>()
-    private fun receivedCounter(websiteId: String): Counter = receivedCounters.computeIfAbsent(websiteId) {
-        meterRegistry.counter("requests_total", "result", "recieved", "websiteId", websiteId)
-    }
+    private val receivedRequests: Counter = meterRegistry.counter("requests_total", "result", "recieved")
 
     private val truncCounters = ConcurrentHashMap<String, Counter>()
-    private fun truncCounter(field: String, websiteId: String): Counter =
-        truncCounters.computeIfAbsent("$field|$websiteId") {
-            meterRegistry.counter("truncations_by_field_total", "field", field, "websiteId", websiteId)
-        }
+    private fun truncCounter(field: String): Counter = truncCounters.computeIfAbsent(field) {
+        meterRegistry.counter("truncations_by_field_total", "field", field)
+    }
 
     @PostMapping("/api/send")
     fun sendEvent(
@@ -34,15 +30,15 @@ class EventController(
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
         @RequestHeader(FORWARDED_FOR, required = false) forwardedFor: String?,
     ): Mono<ResponseEntity<Response>> {
+        receivedRequests.increment()
+
         val safeUserAgent = userAgent?.trim().orEmpty()
         val safeExcludeFilters = excludeFilters?.trim().takeUnless { it.isNullOrEmpty() }
         val safeForwardedFor = forwardedFor?.trim().takeUnless { it.isNullOrEmpty() }
 
         return eventMono.publishOn(Schedulers.boundedElastic()).map { event ->
-            receivedCounter(event.payload.website.toString()).increment()
-
             val sanitized = event.sanitizeForKafkaWithReport()
-            recordTruncationMetrics(sanitized.truncationReport, event.payload.website.toString())
+            recordTruncationMetrics(sanitized.truncationReport)
 
             eventPublishService.publishEventAsync(
                 event = sanitized.event,
@@ -55,9 +51,8 @@ class EventController(
         }
     }
 
-    private fun recordTruncationMetrics(report: TruncationReport?, websiteId: String) {
-        report?.violations?.asSequence()?.map { it.field }?.distinct()
-            ?.forEach { truncCounter(it, websiteId).increment() }
+    private fun recordTruncationMetrics(report: TruncationReport?) {
+        report?.violations?.asSequence()?.map { it.field }?.distinct()?.forEach { truncCounter(it).increment() }
     }
 }
 

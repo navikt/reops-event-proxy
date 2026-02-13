@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
 
 const val USER_AGENT = "user-agent"
 const val EXCLUDE_FILTERS = "x-exclude-filters"
@@ -20,19 +19,11 @@ const val FORWARDED_FOR = "x-forwarded-for"
 @Service
 class EventPublishService(
     private val kafkaTemplate: KafkaTemplate<String, Event>,
-    private val meterRegistry: MeterRegistry,
+    meterRegistry: MeterRegistry,
     @Value("\${spring.kafka.topic}") private val topic: String
 ) {
-    private val kafkaCreatedCounters = ConcurrentHashMap<String, Counter>()
-    private val kafkaFailureCounters = ConcurrentHashMap<String, Counter>()
-
-    private fun kafkaCreatedCounter(websiteId: String): Counter = kafkaCreatedCounters.computeIfAbsent(websiteId) {
-        meterRegistry.counter("kafka_events_total", "result", "created", "websiteId", websiteId)
-    }
-
-    private fun kafkaFailureCounter(websiteId: String): Counter = kafkaFailureCounters.computeIfAbsent(websiteId) {
-        meterRegistry.counter("kafka_events_total", "result", "failure", "websiteId", websiteId)
-    }
+    private val kafkaCreated: Counter = meterRegistry.counter("kafka_events_total", "result", "created")
+    private val kafkaFailure: Counter = meterRegistry.counter("kafka_events_total", "result", "failure")
 
     fun publishEventAsync(
         event: Event, userAgent: String, excludeFilters: String?, forwardedFor: String?
@@ -44,22 +35,19 @@ class EventPublishService(
             excludeFilters?.takeIf { it.isNotBlank() }?.let { headers().add(EXCLUDE_FILTERS, it.toByteArray(UTF_8)) }
         }
 
-        val websiteId = event.payload.website.toString()
-
         return runCatching {
             kafkaTemplate.send(record)
         }.getOrElse { ex ->
             CompletableFuture.failedFuture(ex)
         }.whenComplete { _, ex ->
             if (ex == null) {
-                kafkaCreatedCounter(websiteId).increment()
+                kafkaCreated.increment()
             } else {
-                kafkaFailureCounter(websiteId).increment()
+                kafkaFailure.increment()
                 LOG.warn(
-                    "Kafka publish failed topic={} key={} websiteId={} ex={} msg={}",
+                    "Kafka publish failed topic={} key={} ex={} msg={}",
                     topic,
                     key,
-                    websiteId,
                     ex.javaClass.simpleName,
                     ex.message?.take(200)
                 )

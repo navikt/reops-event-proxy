@@ -17,7 +17,6 @@ import org.mockito.kotlin.whenever
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
 import java.nio.charset.StandardCharsets.UTF_8
-import java.util.UUID
 import java.util.concurrent.CompletableFuture
 
 class EventPublishServiceTest {
@@ -30,18 +29,12 @@ class EventPublishServiceTest {
 
         val createdCounter = mock<Counter>()
         val failureCounter = mock<Counter>()
-        val websiteId = UUID.randomUUID().toString()
-        doReturn(createdCounter).whenever(meterRegistry)
-            .counter("kafka_events_total", "result", "created", "websiteId", websiteId)
-        doReturn(failureCounter).whenever(meterRegistry)
-            .counter("kafka_events_total", "result", "failure", "websiteId", websiteId)
+        doReturn(createdCounter).whenever(meterRegistry).counter("kafka_events_total", "result", "created")
+        doReturn(failureCounter).whenever(meterRegistry).counter("kafka_events_total", "result", "failure")
 
         val service = EventPublishService(kafkaTemplate, meterRegistry, topic)
 
-        val event = Event(
-            type = "test",
-            payload = Event.Payload(website = UUID.fromString(websiteId))
-        )
+        val event = mock<Event>()
         val userAgent = "KakeAgent/1.0"
         val forwardedFor = "127.0.0.1"
         val excludeFilters = "filter1,filter2"
@@ -95,18 +88,12 @@ class EventPublishServiceTest {
 
         val createdCounter = mock<Counter>()
         val failureCounter = mock<Counter>()
-        val websiteId = UUID.randomUUID().toString()
-        doReturn(createdCounter).whenever(meterRegistry)
-            .counter("kafka_events_total", "result", "created", "websiteId", websiteId)
-        doReturn(failureCounter).whenever(meterRegistry)
-            .counter("kafka_events_total", "result", "failure", "websiteId", websiteId)
+        doReturn(createdCounter).whenever(meterRegistry).counter("kafka_events_total", "result", "created")
+        doReturn(failureCounter).whenever(meterRegistry).counter("kafka_events_total", "result", "failure")
 
         val service = EventPublishService(kafkaTemplate, meterRegistry, topic)
 
-        val event = Event(
-            type = "test",
-            payload = Event.Payload(website = UUID.fromString(websiteId))
-        )
+        val event = mock<Event>()
         val userAgent = "JUnit/5"
         val forwardedFor = "127.0.0.1"
         val excludeFilters = "filter1,filter2"
