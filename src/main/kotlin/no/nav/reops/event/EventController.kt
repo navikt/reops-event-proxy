@@ -36,19 +36,21 @@ class EventController(
         val safeExcludeFilters = excludeFilters?.trim().takeUnless { it.isNullOrEmpty() }
         val safeForwardedFor = forwardedFor?.trim().takeUnless { it.isNullOrEmpty() }
 
-        return eventMono.map { event ->
+        return eventMono.flatMap { event ->
             val sanitized = event.sanitizeForKafkaWithReport()
             LOG.info("Received event website={}", event.payload.website)
             recordTruncationMetrics(sanitized.truncationReport)
 
-            eventPublishService.publishEventAsync(
-                event = sanitized.event,
-                userAgent = safeUserAgent,
-                excludeFilters = safeExcludeFilters,
-                forwardedFor = safeForwardedFor
-            )
-
-            ResponseEntity.status(HttpStatus.CREATED).body(Response("Created", 201, sanitized.truncationReport))
+            Mono.fromCompletionStage(
+                eventPublishService.publishEventAsync(
+                    event = sanitized.event,
+                    userAgent = safeUserAgent,
+                    excludeFilters = safeExcludeFilters,
+                    forwardedFor = safeForwardedFor
+                )
+            ).map {
+                ResponseEntity.status(HttpStatus.CREATED).body(Response("Created", 201, sanitized.truncationReport))
+            }
         }
     }
 
