@@ -1,6 +1,7 @@
 package no.nav.reops.truncation
 
 import no.nav.reops.event.Event
+import no.nav.reops.exception.InvalidEventException
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import tools.jackson.databind.node.JsonNodeFactory
@@ -16,7 +17,7 @@ class EventSanitizerTest {
             type = "   ", payload = Event.Payload(website = UUID.randomUUID())
         )
 
-        val ex = assertThrows(IllegalArgumentException::class.java) {
+        val ex = assertThrows(InvalidEventException::class.java) {
             event.sanitizeForKafkaWithReport()
         }
 

@@ -1,6 +1,7 @@
 plugins {
 	id("org.springframework.boot") version "4.0.2"
 	id("io.spring.dependency-management") version "1.1.7"
+	id("org.graalvm.buildtools.native") version "0.10.6"
 	kotlin("jvm") version "2.3.10"
 	kotlin("plugin.spring") version "2.3.10"
 }
@@ -10,7 +11,9 @@ version = "0.0.1-SNAPSHOT"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(
+			providers.gradleProperty("javaVersion").getOrElse("21")
+		)
 	}
 }
 
@@ -53,3 +56,28 @@ tasks.withType<Test> {
 tasks.named<Jar>("bootJar") {
 	archiveFileName.set("app.jar")
 }
+
+graalvmNative {
+	binaries {
+		named("main") {
+			imageName.set("app")
+			mainClass.set("no.nav.reops.EventProxyApplicationKt")
+		}
+	}
+	binaries.all {
+		buildArgs.addAll(
+			"-H:+ReportExceptionStackTraces",
+			"-J-Xmx6g",
+
+			// Reduce image size: exclude AWT (not needed for a REST/Kafka proxy)
+			"--exclude-config", ".*/java\\.desktop/.*",
+
+			// Strip debug symbols from the binary
+			"-H:-IncludeMethodData",
+
+			// Optimize for size over peak throughput
+			"-Os",
+		)
+	}
+}
+

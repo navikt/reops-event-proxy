@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ThreadLocalRandom
 
 const val USER_AGENT = "user-agent"
 const val EXCLUDE_FILTERS = "x-exclude-filters"
@@ -28,7 +29,7 @@ class EventPublishService(
     fun publishEventAsync(
         event: Event, userAgent: String, excludeFilters: String?, forwardedFor: String?
     ): CompletableFuture<SendResult<String, Event>> {
-        val key = UUID.randomUUID().toString()
+        val key = ThreadLocalRandom.current().let { UUID(it.nextLong(), it.nextLong()) }.toString()
         val record = ProducerRecord(topic, key, event).apply {
             headers().add(USER_AGENT, userAgent.toByteArray(UTF_8))
             forwardedFor?.takeIf { it.isNotBlank() }?.let { headers().add(FORWARDED_FOR, it.toByteArray(UTF_8)) }

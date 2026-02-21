@@ -2,7 +2,6 @@
 
 ### Prerequisites
 - Java version 21
-- Maven 3.9+
 
 ### Build the project
 ```
@@ -15,3 +14,17 @@
 2. Start application with profile `local`:  
    `./gradlew bootRun -Dspring-boot.run.profiles=local`
  - local profile does not use ssl for kafka
+
+### Build native image locally (requires GraalVM JDK 25)
+```
+./gradlew nativeCompile
+./build/native/nativeCompile/app
+```
+
+### Build and run with docker (native image)
+```
+docker build -t reops-event-proxy .
+```
+```
+docker run --network host -e SPRING_PROFILES_ACTIVE=local reops-event-proxy
+```
