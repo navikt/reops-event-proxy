@@ -13,6 +13,8 @@ spring:
         acks: 1                         # leader-only acknowledgments for lower latency
         enable.idempotence: false       # disable idempotence to allow higher in-flight requests
         max.in.flight.requests.per.connection: 10  # allow up to 10 inflight requests
+  codec:
+    max-in-memory-size: 65536    # 64KB max request body size
   main:
     banner-mode: off
     web-application-type: reactive

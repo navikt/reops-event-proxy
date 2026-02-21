@@ -12,8 +12,8 @@ spring:
       ssl.keystore.location: ${KAFKA_KEYSTORE_PATH}
       ssl.keystore.password: ${KAFKA_CREDSTORE_PASSWORD}
       ssl.key.password: ${KAFKA_CREDSTORE_PASSWORD}
-      reconnect.backoff.ms: 5000
-      reconnect.backoff.max.ms: 1000
+      reconnect.backoff.ms: 1000
+      reconnect.backoff.max.ms: 5000
       auto.offset.reset: earliest
 
 logging:
