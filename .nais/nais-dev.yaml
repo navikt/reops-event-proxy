@@ -13,17 +13,14 @@ spec:
     initialDelay: 5
     periodSeconds: 2
     failureThreshold: 30
-    timeoutSeconds: 3
   liveness:
     path: /internal/health
     periodSeconds: 5
     failureThreshold: 3
-    timeoutSeconds: 3
   readiness:
     path: /internal/health
     periodSeconds: 5
     failureThreshold: 3
-    timeoutSeconds: 3
   replicas:
     min: 2
     max: 4
