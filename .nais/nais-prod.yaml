@@ -8,12 +8,22 @@ metadata:
 spec:
   image: "{{ image }}"
   port: 8080
-  liveness:
-    path: /internal/health
-    initialDelay: 30
-  readiness:
+  startup:
     path: /internal/health
     initialDelay: 5
+    periodSeconds: 2
+    failureThreshold: 30
+    timeoutSeconds: 3
+  liveness:
+    path: /internal/health
+    periodSeconds: 5
+    failureThreshold: 3
+    timeoutSeconds: 3
+  readiness:
+    path: /internal/health
+    periodSeconds: 5
+    failureThreshold: 3
+    timeoutSeconds: 3
   replicas:
     min: 2
     max: 4
@@ -25,7 +35,6 @@ spec:
     path: /internal/prometheus
   resources:
     limits:
-      cpu: "1000m"
       memory: 1024Mi
     requests:
       cpu: "200m"

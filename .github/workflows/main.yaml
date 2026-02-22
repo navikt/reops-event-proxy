@@ -9,6 +9,10 @@ on:
       - '.compose/**'
   workflow_dispatch:
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     name: "build"
@@ -32,12 +36,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew clean build
-      - name: Login to GitHub Packages Docker Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         id: docker-build-push
         uses: nais/docker-build-push@v0
@@ -45,18 +43,13 @@ jobs:
           team: team-researchops
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-      - name: Show image and SHA for later prod deploy
-        run: |
-          echo "========================================"
-          echo "image=${{ steps.docker-build-push.outputs.image }}"
-          echo "version=${{ github.sha }}"
-          echo "========================================"
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
 
   deploy-kafka-dev:
     needs: build
     runs-on: ubuntu-latest
+    environment: dev
     permissions:
       contents: read
       id-token: write
@@ -71,6 +64,7 @@ jobs:
   deploy-application-dev:
     needs: [build, deploy-kafka-dev]
     runs-on: ubuntu-latest
+    environment: dev
     permissions:
       contents: read
       id-token: write
@@ -84,8 +78,9 @@ jobs:
           VAR: image=${{ needs.build.outputs.image }}
 
   deploy-kafka-prod:
-    needs: [build, deploy-application-dev]
+    needs: deploy-application-dev
     runs-on: ubuntu-latest
+    environment: prod
     permissions:
       contents: read
       id-token: write
@@ -98,8 +93,9 @@ jobs:
           RESOURCE: .nais/topics/events-prod.yaml
 
   deploy-application-prod:
-    needs: [build, deploy-kafka-prod, deploy-application-dev]
+    needs: [build, deploy-kafka-prod]
     runs-on: ubuntu-latest
+    environment: prod
     permissions:
       contents: read
       id-token: write
