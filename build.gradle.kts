@@ -1,6 +1,9 @@
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+
 plugins {
 	id("org.springframework.boot") version "4.0.3"
 	id("io.spring.dependency-management") version "1.1.7"
+	id("org.graalvm.buildtools.native") version "0.10.6"
 	kotlin("jvm") version "2.3.10"
 	kotlin("plugin.spring") version "2.3.10"
 }
@@ -10,7 +13,9 @@ version = "0.0.1-SNAPSHOT"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(
+			providers.gradleProperty("javaVersion").getOrElse("25")
+		)
 	}
 }
 
@@ -18,15 +23,23 @@ repositories {
 	mavenCentral()
 }
 
+configurations.configureEach {
+	exclude(group = "org.lz4", module = "lz4-java")
+	resolutionStrategy.capabilitiesResolution.withCapability("org.lz4", "lz4-java") {
+		select(candidates.first { it.id.let { id -> id is ModuleComponentIdentifier && id.group == "at.yawk.lz4" } })
+	}
+}
+
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+	implementation("tools.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
 	implementation("org.springframework.boot:spring-boot-starter-kafka")
+	implementation("at.yawk.lz4:lz4-java:1.10.3")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("io.micrometer:micrometer-registry-prometheus")
 
@@ -52,4 +65,28 @@ tasks.withType<Test> {
 
 tasks.named<Jar>("bootJar") {
 	archiveFileName.set("app.jar")
+}
+
+graalvmNative {
+	binaries {
+		named("main") {
+			imageName.set("app")
+			mainClass.set("no.nav.reops.EventProxyApplicationKt")
+		}
+	}
+	binaries.all {
+		buildArgs.addAll(
+			"-H:+ReportExceptionStackTraces",
+			"-J-Xmx6g",
+
+			// Reduce image size: exclude AWT (not needed for a REST/Kafka proxy)
+			"--exclude-config", ".*/java\\.desktop/.*",
+
+			// Strip debug symbols from the binary
+			"-H:-IncludeMethodData",
+
+			// Optimize for size over peak throughput
+			"-Os",
+		)
+	}
 }

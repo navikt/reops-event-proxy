@@ -1,12 +1,15 @@
 package no.nav.reops.truncation
 
 import no.nav.reops.event.Event
+import no.nav.reops.exception.InvalidEventException
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.node.JsonNodeFactory
 import tools.jackson.databind.node.ObjectNode
 
 private fun String.requireNotBlank(fieldName: String): String =
-    also { require(it.isNotBlank()) { "$fieldName must not be blank" } }
+    also {
+        if (it.isBlank()) throw InvalidEventException("$fieldName must not be blank")
+    }
 
 private fun String?.nullIfBlank(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
 
@@ -28,58 +31,27 @@ private fun normalizeDataToObject(node: JsonNode?): JsonNode? {
 }
 
 fun Event.sanitizeForKafkaWithReport(): SanitizedEvent {
-    val trunkCollector = TruncationValidate()
+    val tc = TruncationValidate()
 
-    val normalized = copy(
-        type = type.trim(), payload = payload.copy(
+    val trimmedType = type.trim()
+    trimmedType.requireNotBlank("type")
+
+    val sanitized = Event(
+        type = tc.truncateMarked("type", trimmedType), payload = Event.Payload(
             website = payload.website,
-            id = payload.id.nullIfBlank(),
-            hostname = payload.hostname.nullIfBlank(),
-            screen = payload.screen.nullIfBlank(),
-            language = payload.language.nullIfBlank(),
-            title = payload.title.nullIfBlank(),
-            url = payload.url.nullIfBlank(),
-            referrer = payload.referrer.nullIfBlank(),
-            name = payload.name.nullIfBlank(),
-            data = normalizeDataToObject(payload.data)
-        )
-    )
-
-    normalized.type.requireNotBlank("type")
-
-    val sanitized = normalized.copy(
-        type = trunkCollector.truncateMarked("type", normalized.type),
-        payload = Event.Payload(
-            website = normalized.payload.website,
-            id = normalized.payload.id?.let {
-                trunkCollector.truncateMarked("payload.id", it)
-            },
-            hostname = normalized.payload.hostname?.let {
-                trunkCollector.truncateMarked("payload.hostname", it)
-            },
-            screen = normalized.payload.screen?.let {
-                trunkCollector.truncateMarked("payload.screen", it)
-            },
-            language = normalized.payload.language?.let {
-                trunkCollector.truncateMarked("payload.language", it)
-            },
-            title = normalized.payload.title?.let {
-                trunkCollector.truncateMarked("payload.title", it)
-            },
-            url = normalized.payload.url?.let {
-                trunkCollector.truncateMarked("payload.url", it)
-            },
-            referrer = normalized.payload.referrer?.let {
-                trunkCollector.truncateMarked("payload.referrer", it)
-            },
-            name = normalized.payload.name?.let {
-                trunkCollector.truncateMarked("payload.name", it)
-            },
-            data = trunkCollector.truncateJsonNode("payload.data", normalized.payload.data)
+            id = payload.id.nullIfBlank()?.let { tc.truncateMarked("payload.id", it) },
+            hostname = payload.hostname.nullIfBlank()?.let { tc.truncateMarked("payload.hostname", it) },
+            screen = payload.screen.nullIfBlank()?.let { tc.truncateMarked("payload.screen", it) },
+            language = payload.language.nullIfBlank()?.let { tc.truncateMarked("payload.language", it) },
+            title = payload.title.nullIfBlank()?.let { tc.truncateMarked("payload.title", it) },
+            url = payload.url.nullIfBlank()?.let { tc.truncateMarked("payload.url", it) },
+            referrer = payload.referrer.nullIfBlank()?.let { tc.truncateMarked("payload.referrer", it) },
+            name = payload.name.nullIfBlank()?.let { tc.truncateMarked("payload.name", it) },
+            data = tc.truncateJsonNode("payload.data", normalizeDataToObject(payload.data))
         )
     )
 
     return SanitizedEvent(
-        event = sanitized, truncationReport = trunkCollector.reportOrNull()
+        event = sanitized, truncationReport = tc.reportOrNull()
     )
 }

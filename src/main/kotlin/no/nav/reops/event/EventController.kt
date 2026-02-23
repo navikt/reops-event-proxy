@@ -9,8 +9,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
-import reactor.core.scheduler.Schedulers
-import java.util.concurrent.ConcurrentHashMap
 
 @CrossOrigin(value = ["*"], allowedHeaders = ["*"], methods = [RequestMethod.POST, RequestMethod.OPTIONS])
 @RestController
@@ -19,10 +17,11 @@ class EventController(
 ) {
     private val receivedRequests: Counter = meterRegistry.counter("requests_total", "result", "recieved")
 
-    private val truncCounters = ConcurrentHashMap<String, Counter>()
-    private fun truncCounter(field: String): Counter = truncCounters.computeIfAbsent(field) {
+    private val truncCounters: Map<String, Counter> = KNOWN_FIELDS.associateWith { field ->
         meterRegistry.counter("truncations_by_field_total", "field", field)
     }
+
+    private fun truncCounter(field: String): Counter = truncCounters[field] ?: truncCounters.getValue(DATA_BUCKET)
 
     @PostMapping("/api/send")
     fun sendEvent(
@@ -37,19 +36,21 @@ class EventController(
         val safeExcludeFilters = excludeFilters?.trim().takeUnless { it.isNullOrEmpty() }
         val safeForwardedFor = forwardedFor?.trim().takeUnless { it.isNullOrEmpty() }
 
-        return eventMono.publishOn(Schedulers.boundedElastic()).map { event ->
+        return eventMono.flatMap { event ->
             val sanitized = event.sanitizeForKafkaWithReport()
             LOG.info("Received event website={}", event.payload.website)
             recordTruncationMetrics(sanitized.truncationReport)
 
-            eventPublishService.publishEventAsync(
-                event = sanitized.event,
-                userAgent = safeUserAgent,
-                excludeFilters = safeExcludeFilters,
-                forwardedFor = safeForwardedFor
-            )
-
-            ResponseEntity.status(HttpStatus.CREATED).body(Response("Created", 201, sanitized.truncationReport))
+            Mono.fromCompletionStage(
+                eventPublishService.publishEventAsync(
+                    event = sanitized.event,
+                    userAgent = safeUserAgent,
+                    excludeFilters = safeExcludeFilters,
+                    forwardedFor = safeForwardedFor
+                )
+            ).map {
+                ResponseEntity.status(HttpStatus.CREATED).body(Response("Created", 201, sanitized.truncationReport))
+            }
         }
     }
 
@@ -59,6 +60,17 @@ class EventController(
 
     private companion object {
         private val LOG = LoggerFactory.getLogger(EventController::class.java)
+        private const val DATA_BUCKET = "payload.data"
+        private val KNOWN_FIELDS = listOf(
+            "payload.hostname",
+            "payload.screen",
+            "payload.language",
+            "payload.title",
+            "payload.url",
+            "payload.referrer",
+            "payload.name",
+            DATA_BUCKET,
+        )
     }
 }
 

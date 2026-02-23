@@ -20,36 +20,41 @@ internal class TruncationValidate(private val limit: Int = MAX_LENGTH) {
 
     fun truncateJsonNode(field: String, node: JsonNode?): JsonNode? {
         if (node == null) return null
+        if (!needsTruncation(node)) return node
+        return deepTruncate(field, node)
+    }
 
-        return when {
-            node.isString -> {
-                JsonNodeFactory.instance.stringNode(truncateMarked(field, node.asString()))
-            }
+    private fun needsTruncation(node: JsonNode): Boolean = when {
+        node.isString -> node.asString().length > limit
+        node.isObject -> (node as ObjectNode).properties().any { (_, child) -> needsTruncation(child) }
+        node.isArray -> node.any { child -> needsTruncation(child) }
+        else -> false
+    }
 
-            node.isObject -> {
-                val src = node as ObjectNode
-                val dst = JsonNodeFactory.instance.objectNode()
-
-                for ((name, child) in src.properties()) {
-                    dst.set(name, truncateJsonNode("$field.$name", child))
-                }
-
-                dst
-            }
-
-            node.isArray -> {
-                val src = node as ArrayNode
-                val dst = JsonNodeFactory.instance.arrayNode()
-
-                for ((idx, child) in src.withIndex()) {
-                    dst.add(truncateJsonNode("$field[$idx]", child))
-                }
-
-                dst
-            }
-
-            else -> node
+    private fun deepTruncate(field: String, node: JsonNode): JsonNode = when {
+        node.isString -> {
+            JsonNodeFactory.instance.stringNode(truncateMarked(field, node.asString()))
         }
+
+        node.isObject -> {
+            val src = node as ObjectNode
+            val dst = JsonNodeFactory.instance.objectNode()
+            for ((name, child) in src.properties()) {
+                dst.set(name, deepTruncate("$field.$name", child))
+            }
+            dst
+        }
+
+        node.isArray -> {
+            val src = node as ArrayNode
+            val dst = JsonNodeFactory.instance.arrayNode()
+            for ((idx, child) in src.withIndex()) {
+                dst.add(deepTruncate("$field[$idx]", child))
+            }
+            dst
+        }
+
+        else -> node
     }
 
     fun reportOrNull(): TruncationReport? =
