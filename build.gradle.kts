@@ -3,7 +3,7 @@ import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 plugins {
 	id("org.springframework.boot") version "4.0.3"
 	id("io.spring.dependency-management") version "1.1.7"
-	id("org.graalvm.buildtools.native") version "0.10.6"
+	id("org.graalvm.buildtools.native") version "0.11.4"
 	kotlin("jvm") version "2.3.10"
 	kotlin("plugin.spring") version "2.3.10"
 }
