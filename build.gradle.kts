@@ -39,7 +39,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
 	implementation("org.springframework.boot:spring-boot-starter-kafka")
-	implementation("at.yawk.lz4:lz4-java:1.10.3")
+	implementation("at.yawk.lz4:lz4-java:1.10.4")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("io.micrometer:micrometer-registry-prometheus")
 
