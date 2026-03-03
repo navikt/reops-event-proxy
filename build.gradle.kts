@@ -77,7 +77,6 @@ graalvmNative {
 	binaries.all {
 		buildArgs.addAll(
 			"-H:+ReportExceptionStackTraces",
-			"-J-Xmx6g",
 
 			// Reduce image size: exclude AWT (not needed for a REST/Kafka proxy)
 			"--exclude-config", ".*/java\\.desktop/.*",
@@ -88,5 +87,11 @@ graalvmNative {
 			// Optimize for size over peak throughput
 			"-Os",
 		)
+
+		if (System.getenv("CI") == null) {
+			buildArgs.add("-J-Xmx6g")
+		} else {
+			buildArgs.add("-J-Xmx32g")
+		}
 	}
 }
