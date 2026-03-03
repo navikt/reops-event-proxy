@@ -14,6 +14,8 @@ RUN ./gradlew dependencies --no-daemon -PjavaVersion=25 || true
 
 # Copy source and build native image
 COPY src src
+ARG CI
+ENV CI=${CI}
 RUN ./gradlew nativeCompile --no-daemon -PjavaVersion=25 \
     && strip build/native/nativeCompile/app
 
