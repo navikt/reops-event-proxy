@@ -5,7 +5,7 @@ import tools.jackson.databind.node.ArrayNode
 import tools.jackson.databind.node.JsonNodeFactory
 import tools.jackson.databind.node.ObjectNode
 
-internal const val MAX_LENGTH = 500
+internal const val MAX_LENGTH = 499
 private const val TRUNC_SUFFIX = "TRUNCATED"
 
 internal class TruncationValidate(private val limit: Int = MAX_LENGTH) {
