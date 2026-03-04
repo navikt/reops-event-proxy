@@ -6,7 +6,7 @@ spring:
     topic: test2
     producer:
       properties:
-        max.block.ms: 50                # If producer buffer/metadata isn't ready, do NOT block for seconds
+        max.block.ms: 500               # If producer buffer/metadata isn't ready, do NOT block for seconds
         linger.ms: 50                   # wait up to 50ms to batch messages
         batch.size: 131072              # 128KB batch size max (improved throughput with larger batches)
         compression.type: lz4           # compress full batches with LZ4 (high-throughput compression)
