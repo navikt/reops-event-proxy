@@ -99,7 +99,7 @@ jobs:
           RESOURCE: .nais/topics/events-dlq-prod.yaml
 
   deploy-kafka-manager-dev:
-    needs: [test, docker, deploy-kafka-dev, deploy-kafka-dlq-dev]
+    needs: [test, docker, deploy-kafka-dev]
     runs-on: ubuntu-latest
     environment: dev
     permissions:
@@ -115,7 +115,7 @@ jobs:
           VAR: image=${{ needs.docker.outputs.image }}
 
   deploy-application-dev:
-    needs: [test, docker, deploy-kafka-dev, deploy-kafka-dlq-dev]
+    needs: [test, docker, deploy-kafka-dev]
     runs-on: ubuntu-latest
     environment: dev
     permissions:
