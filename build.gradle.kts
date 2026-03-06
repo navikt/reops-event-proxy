@@ -88,10 +88,10 @@ graalvmNative {
 			"-Os",
 		)
 
-		if (System.getenv("CI") == null) {
-			buildArgs.add("-J-Xmx6g")
-		} else {
+		if (System.getenv("CI").toBoolean()) {
 			buildArgs.add("-J-Xmx32g")
+		} else {
+			buildArgs.add("-J-Xmx6g")
 		}
 	}
 }
