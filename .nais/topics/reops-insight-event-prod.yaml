@@ -1,0 +1,74 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: reops-insight-event
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+spec:
+  pool: nav-prod
+  config:
+    cleanupPolicy: delete
+    minimumInSyncReplicas: 1
+    partitions: 4
+    retentionHours: 168
+  acl:
+    - team: team-researchops
+      application: reops-event-proxy
+      access: write
+    - team: team-researchops
+      application: reops-umami-consumer
+      access: read
+    - team: team-researchops
+      application: reops-kafka-manager
+      access: read
+---
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: reops-insight-event-retry
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+spec:
+  pool: nav-prod
+  config:
+    cleanupPolicy: delete
+    minimumInSyncReplicas: 1
+    partitions: 1
+    retentionHours: 2
+  acl:
+    - team: team-researchops
+      application: reops-umami-consumer
+      access: readwrite
+    - team: team-researchops
+      application: reops-kafka-manager
+      access: read
+---
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: reops-insight-event-dlt
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+spec:
+  pool: nav-prod
+  config:
+    cleanupPolicy: delete
+    minimumInSyncReplicas: 1
+    partitions: 1
+    retentionHours: 168
+  acl:
+    - team: team-researchops
+      application: reops-umami-consumer
+      access: readwrite
+    - team: team-researchops
+      application: reops-kafka-manager
+      access: read

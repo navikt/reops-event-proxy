@@ -68,21 +68,7 @@ jobs:
         uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
-          RESOURCE: .nais/topics/events-dev.yaml
-
-  deploy-kafka-dlq-dev:
-    runs-on: ubuntu-latest
-    environment: dev
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v6
-      - name: Deploy kafka to Dev
-        uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: dev-gcp
-          RESOURCE: .nais/topics/events-dlq-dev.yaml
+          RESOURCE: .nais/topics/reops-insight-event-dev.yaml
 
   deploy-kafka-prod:
     runs-on: ubuntu-latest
@@ -96,7 +82,7 @@ jobs:
         uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: prod-gcp
-          RESOURCE: .nais/topics/events-prod.yaml
+          RESOURCE: .nais/topics/reops-insight-event-prod.yaml
 
   deploy-kafka-dlq-prod:
     runs-on: ubuntu-latest

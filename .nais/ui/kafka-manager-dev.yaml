@@ -51,7 +51,13 @@ spec:
               "valueDeserializerType": "STRING"
             },
             {
-              "name": "team-researchops.reops-insight-event-dlq",
+              "name": "team-researchops.reops-insight-event-retry",
+              "location": "AIVEN",
+              "keyDeserializerType": "STRING",
+              "valueDeserializerType": "STRING"
+            }
+            {
+              "name": "team-researchops.reops-insight-event-dlt",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
