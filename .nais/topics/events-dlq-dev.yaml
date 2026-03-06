@@ -21,4 +21,6 @@ spec:
     - team: team-researchops
       application: reops-umami-consumer
       access: read
-
+    - team: team-researchops
+      application: reops-kafka-manager
+      access: read

@@ -112,6 +112,22 @@ jobs:
           CLUSTER: prod-gcp
           RESOURCE: .nais/topics/events-dlq-prod.yaml
 
+  deploy-kafka-manager-dev:
+    needs: [test, docker, deploy-kafka-dev, deploy-kafka-dlq-dev]
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy kafka-manager to Dev
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/ui/kafka-manager-dev.yaml
+          VAR: image=${{ needs.docker.outputs.image }}
+
   deploy-application-dev:
     needs: [test, docker, deploy-kafka-dev, deploy-kafka-dlq-dev]
     runs-on: ubuntu-latest
