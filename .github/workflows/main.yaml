@@ -117,7 +117,7 @@ jobs:
           VAR: image=${{ needs.docker.outputs.image }}
 
   deploy-application-prod:
-    needs: [docker, deploy-kafka-prod, deploy-kafka-dlq-prod, deploy-application-dev]
+    needs: [docker, deploy-kafka-prod, deploy-application-dev]
     runs-on: ubuntu-latest
     environment: prod
     permissions:
