@@ -55,7 +55,7 @@ spec:
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
-            }
+            },
             {
               "name": "team-researchops.reops-insight-event-dlt",
               "location": "AIVEN",
