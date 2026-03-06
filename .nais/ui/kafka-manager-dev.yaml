@@ -45,13 +45,13 @@ spec:
         {
           "topics": [
             {
-              "name": "reops-insight-event",
+              "name": "team-researchops.reops-insight-event",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
             },
             {
-              "name": "reops-insight-event-dlq",
+              "name": "team-researchops.reops-insight-event-dlq",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
