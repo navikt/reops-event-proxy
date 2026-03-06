@@ -70,6 +70,20 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/topics/events-dev.yaml
 
+  deploy-kafka-dlq-dev:
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy kafka to Dev
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/topics/events-dlq-dev.yaml
+
   deploy-kafka-prod:
     runs-on: ubuntu-latest
     environment: prod
@@ -84,8 +98,22 @@ jobs:
           CLUSTER: prod-gcp
           RESOURCE: .nais/topics/events-prod.yaml
 
+  deploy-kafka-dlq-prod:
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy kafka to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/topics/events-dlq-prod.yaml
+
   deploy-application-dev:
-    needs: [test, docker, deploy-kafka-dev]
+    needs: [test, docker, deploy-kafka-dev, deploy-kafka-dlq-dev]
     runs-on: ubuntu-latest
     environment: dev
     permissions:
@@ -101,7 +129,7 @@ jobs:
           VAR: image=${{ needs.docker.outputs.image }}
 
   deploy-application-prod:
-    needs: [docker, deploy-kafka-prod, deploy-application-dev]
+    needs: [docker, deploy-kafka-prod, deploy-kafka-dlq-prod, deploy-application-dev]
     runs-on: ubuntu-latest
     environment: prod
     permissions:
