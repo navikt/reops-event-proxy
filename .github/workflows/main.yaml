@@ -84,20 +84,6 @@ jobs:
           CLUSTER: prod-gcp
           RESOURCE: .nais/topics/reops-insight-event-prod.yaml
 
-  deploy-kafka-dlq-prod:
-    runs-on: ubuntu-latest
-    environment: prod
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v6
-      - name: Deploy kafka to Prod
-        uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/topics/events-dlq-prod.yaml
-
   deploy-kafka-manager-dev:
     needs: [test, docker, deploy-kafka-dev]
     runs-on: ubuntu-latest
