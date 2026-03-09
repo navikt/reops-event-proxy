@@ -14,6 +14,7 @@ spring:
       ssl.key.password: ${KAFKA_CREDSTORE_PASSWORD}
       reconnect.backoff.ms: 1000
       reconnect.backoff.max.ms: 5000
+      metadata.max.idle.ms: 600000
       auto.offset.reset: earliest
 
 logging:
