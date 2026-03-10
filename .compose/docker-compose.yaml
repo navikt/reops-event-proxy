@@ -71,20 +71,6 @@ services:
     cpus: 0.5
     mem_limit: 2g
 
-  # -- Kafka Topic Init --
-#  kafka-init: # Uncomment to create additional topics at startup instead of auto create from application
-#    image: docker.io/apache/kafka:4.1.1
-#    container_name: kafka-init
-#    depends_on:
-#      broker-1:
-#        condition: service_healthy
-#    entrypoint: ["/bin/sh", "-c"]
-#    command:
-#      - |
-#        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic test2 --partitions 3 --replication-factor 1 --bootstrap-server broker-1:9092
-#        echo "Topic 'test2' created with 3 partitions"
-#    restart: "no"
-
   # --- Kafka UI ---
   kafka-ui:
     image: ghcr.io/kafbat/kafka-ui:v1.4.2
