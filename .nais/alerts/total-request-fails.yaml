@@ -9,14 +9,26 @@ spec:
   groups:
     - name: reops-event-proxy-alerts
       rules:
-        - alert: EventErrorRateHigh
+        - alert: RequestErrorRateHigh
           expr: |
-            sum(increase(requests_total{namespace="team-researchops", app="reops-event-proxy", result="failure"}[5m])) > 10
+            sum(increase(requests_total{namespace="team-researchops", app="reops-event-proxy", result="failure"}[5m])) > 5
           for: 5m
           annotations:
-            summary: "High error rate for reops-event-proxy"
+            summary: "High error rate for reops-event-proxy receiving events"
             consequence: "Users are experiencing errors when sending events to reops-event-proxy."
             message: "reops-event-proxy has {{ $value }} failed requests over the last 5 minutes."
+            dashboard_url: "https://grafana.nav.cloud.nais.io/d/reops-event-tracking/reops-event-tracking-proxy-2b-consumer"
+          labels:
+            severity: warning
+            namespace: team-researchops
+        - alert: EventErrorRateHigh
+          expr: |
+            sum(increase(requests_total{namespace="team-researchops", app="reops-event-proxy", result="failure"}[5m])) > 5
+          for: 5m
+          annotations:
+            summary: "High error rate for reops-event-proxy publishing events to kafka"
+            consequence: "Users are experiencing errors when sending events to reops-event-proxy."
+            message: "reops-event-proxy has {{ $value }} failed publishing to kafka over the last 5 minutes."
             dashboard_url: "https://grafana.nav.cloud.nais.io/d/reops-event-tracking/reops-event-tracking-proxy-2b-consumer"
           labels:
             severity: warning
