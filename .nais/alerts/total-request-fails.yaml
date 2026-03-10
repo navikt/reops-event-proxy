@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    team: my-team
+  name: total-request-fails
+  namespace: team-researchops
+spec:
+  groups:
+    - name: reops-event-proxy-alerts
+      rules:
+        - alert: EventErrorRateHigh
+          expr: |
+            sum(increase(requests_total{namespace="team-researchops", app="reops-event-proxy", result="failure"}[5m])) > 0
+          for: 5m
+          annotations:
+            summary: "TEST: High error rate for reops-event-proxy"
+            consequence: "TEST: Users are experiencing errors when sending events to reops-event-proxy."
+            message: "TEST: reops-event-proxy has {{ $value }} failed requests over the last 5 minutes."
+            dashboard_url: "https://grafana.nav.cloud.nais.io/d/reops-event-tracking/reops-event-tracking-proxy-2b-consumer"
+          labels:
+            severity: warning
+            namespace: team-researchops
