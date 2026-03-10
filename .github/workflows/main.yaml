@@ -70,6 +70,20 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/topics/reops-insight-event-dev.yaml
 
+  deploy-alert-dev:
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy alerts to Dev
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/alerts/total-request-fails.yaml
+
   deploy-kafka-prod:
     runs-on: ubuntu-latest
     environment: prod
@@ -83,6 +97,20 @@ jobs:
         env:
           CLUSTER: prod-gcp
           RESOURCE: .nais/topics/reops-insight-event-prod.yaml
+
+  deploy-alert-prod:
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy alerts to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/alerts/total-request-fails.yaml
 
   deploy-kafka-manager-dev:
     needs: [test, docker, deploy-kafka-dev]
