@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   labels:
-    team: my-team
+    team: team-researchops
   name: total-request-fails
   namespace: team-researchops
 spec:
