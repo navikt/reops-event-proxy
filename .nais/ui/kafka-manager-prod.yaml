@@ -38,7 +38,7 @@ spec:
         groups:
           - id: 7c54578e-cbb0-461f-906b-3b10420d7d33 # reops-kafka-innsikt-prod
   kafka:
-    pool: nav-dev
+    pool: nav-prod
   env:
     - name: APP_CONFIG_JSON
       value: >
