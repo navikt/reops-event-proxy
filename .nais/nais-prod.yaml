@@ -22,9 +22,9 @@ spec:
     periodSeconds: 5
     failureThreshold: 3
   replicas:
-    min: 2
-    max: 4
-    cpuThresholdPercentage: 80
+    min: 4
+    max: 14
+    cpuThresholdPercentage: 50
   ingresses:
     - "https://reops-event-proxy.nav.no"
   prometheus:
