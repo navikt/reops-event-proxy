@@ -128,6 +128,22 @@ jobs:
           RESOURCE: .nais/ui/kafka-manager-dev.yaml
           VAR: image=${{ needs.docker.outputs.image }}
 
+  deploy-kafka-manager-prod:
+    needs: [test, docker, deploy-kafka-prod]
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy kafka-manager to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/ui/kafka-manager-prod.yaml
+          VAR: image=${{ needs.docker.outputs.image }}
+
   deploy-application-dev:
     needs: [test, docker, deploy-kafka-dev]
     runs-on: ubuntu-latest
