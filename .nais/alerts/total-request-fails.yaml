@@ -11,7 +11,7 @@ spec:
       rules:
         - alert: RequestErrorRateHigh
           expr: |
-            sum(increase(requests_total{namespace="team-researchops", app="reops-event-proxy", result="failure"}[5m])) > 5
+            sum(increase(requests_total{namespace="team-researchops", app="reops-event-proxy", result="failure"}[5m])) > 2000
           for: 5m
           annotations:
             summary: "High error rate for reops-event-proxy receiving events"
@@ -23,7 +23,7 @@ spec:
             namespace: team-researchops
         - alert: EventErrorRateHigh
           expr: |
-            sum(increase(kafka_events_total{namespace="team-researchops", app="reops-event-proxy", result="failure"}[5m])) > 5
+            sum(increase(kafka_events_total{namespace="team-researchops", app="reops-event-proxy", result="failure"}[5m])) > 20
           for: 5m
           annotations:
             summary: "High error rate for reops-event-proxy publishing events to kafka"
