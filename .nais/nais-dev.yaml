@@ -41,6 +41,9 @@ spec:
   kafka:
     pool: nav-dev
   accessPolicy:
+    inbound:
+      rules:
+        - application: umami-proxy
     outbound:
       external:
         - host: nav-dev-kafka-nav-dev.aivencloud.com
