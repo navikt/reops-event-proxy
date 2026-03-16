@@ -12,6 +12,7 @@ import org.springframework.web.server.MethodNotAllowedException
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerWebInputException
 import org.springframework.web.server.UnsupportedMediaTypeStatusException
+import tools.jackson.core.JacksonException
 
 @ControllerAdvice
 class ControlAdvice(meterRegistry: MeterRegistry) {
@@ -25,6 +26,18 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
         val body = ErrorResponse(
             error = "INVALID_EVENT",
             message = ex.message ?: "Invalid event payload",
+            status = HttpStatus.BAD_REQUEST.value()
+        )
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body)
+    }
+
+    @ExceptionHandler(JacksonException::class)
+    fun handleJacksonException(ex: JacksonException): ResponseEntity<ErrorResponse> {
+        failedRequests.increment()
+        LOG.info("Invalid request body: {}", ex.javaClass.simpleName)
+        val body = ErrorResponse(
+            error = "INVALID_FORMAT",
+            message = "Invalid format in request body",
             status = HttpStatus.BAD_REQUEST.value()
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body)

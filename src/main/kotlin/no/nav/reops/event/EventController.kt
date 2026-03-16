@@ -6,9 +6,11 @@ import no.nav.reops.truncation.TruncationReport
 import no.nav.reops.truncation.sanitizeForKafkaWithReport
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 @CrossOrigin(value = ["*"], allowedHeaders = ["*"], methods = [RequestMethod.POST, RequestMethod.OPTIONS])
 @RestController
@@ -21,14 +23,32 @@ class EventController(
         meterRegistry.counter("truncations_by_field_total", "field", field)
     }
 
+    private val objectMapper = jacksonObjectMapper()
+
     private fun truncCounter(field: String): Counter = truncCounters[field] ?: truncCounters.getValue(DATA_BUCKET)
 
-    @PostMapping("/api/send")
-    fun sendEvent(
+    @PostMapping("/api/send", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun sendEventJson(
         @RequestBody eventMono: Mono<Event>,
         @RequestHeader(USER_AGENT, required = false) userAgent: String?,
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
         @RequestHeader(FORWARDED_FOR, required = false) forwardedFor: String?,
+    ): Mono<ResponseEntity<Response>> = processEvent(eventMono, userAgent, excludeFilters, forwardedFor)
+
+    @PostMapping("/api/send", consumes = [MediaType.TEXT_PLAIN_VALUE])
+    fun sendEventText(
+        @RequestBody bodyMono: Mono<String>,
+        @RequestHeader(USER_AGENT, required = false) userAgent: String?,
+        @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
+        @RequestHeader(FORWARDED_FOR, required = false) forwardedFor: String?,
+    ): Mono<ResponseEntity<Response>> =
+        processEvent(bodyMono.map { objectMapper.readValue(it, Event::class.java) }, userAgent, excludeFilters, forwardedFor)
+
+    private fun processEvent(
+        eventMono: Mono<Event>,
+        userAgent: String?,
+        excludeFilters: String?,
+        forwardedFor: String?,
     ): Mono<ResponseEntity<Response>> {
         receivedRequests.increment()
 
