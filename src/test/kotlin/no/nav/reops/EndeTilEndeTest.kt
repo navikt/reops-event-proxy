@@ -22,6 +22,7 @@ import org.springframework.kafka.test.utils.ContainerTestUtils
 import org.springframework.kafka.test.utils.KafkaTestUtils
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.util.UUID
@@ -112,6 +113,52 @@ class EndeTilEndeTest {
 
         webTestClient().post().uri("/api/send").contentType(MediaType.APPLICATION_JSON).header(USER_AGENT, userAgent)
             .bodyValue(invalidEvent).exchange().expectStatus().isBadRequest
+    }
+
+    @Test
+    fun `skal kunne publisere hendelse med text plain content type`() {
+        val topic = "test-topic"
+        val mapper = jacksonObjectMapper()
+
+        val consumerProps = KafkaTestUtils.consumerProps(embeddedKafka, "e2e-text-consumer", true).toMutableMap()
+        consumerProps[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
+        consumerProps[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
+        consumerProps[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = JacksonJsonDeserializer::class.java
+        consumerProps[JacksonJsonDeserializer.TRUSTED_PACKAGES] = "*"
+        consumerProps[JacksonJsonDeserializer.VALUE_DEFAULT_TYPE] = Event::class.java.name
+
+        val consumer = KafkaConsumer<String, Event>(consumerProps)
+        consumer.use { c ->
+            embeddedKafka.consumeFromAnEmbeddedTopic(c, topic)
+
+            val event = Event(
+                type = "pageview", payload = Event.Payload(
+                    website = UUID.randomUUID(),
+                    hostname = "localhost",
+                    screen = "1920x1080",
+                    language = "en",
+                    title = "Home",
+                    url = "https://example.test/",
+                    referrer = "https://referrer.test/"
+                )
+            )
+
+            val jsonBody = mapper.writeValueAsString(event)
+            val userAgent = "JUnit/5"
+
+            webTestClient().post().uri("/api/send").contentType(MediaType.TEXT_PLAIN)
+                .header(USER_AGENT, userAgent).bodyValue(jsonBody).exchange().expectStatus().isCreated
+
+            val records = KafkaTestUtils.getRecords(c, Duration.ofSeconds(10))
+            val record = records.records(topic).last()
+
+            assertNotNull(record.key())
+            assertEquals(event, record.value())
+
+            val uaHeader = record.headers().lastHeader(USER_AGENT)
+            assertNotNull(uaHeader)
+            assertEquals(userAgent, uaHeader.value().toString(StandardCharsets.UTF_8))
+        }
     }
 
     data class TestEvent(
