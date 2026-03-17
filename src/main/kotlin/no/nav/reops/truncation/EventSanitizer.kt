@@ -46,7 +46,7 @@ fun Event.sanitizeForKafkaWithReport(): SanitizedEvent {
             title = payload.title.nullIfBlank()?.let { tc.truncateMarked("payload.title", it) },
             url = payload.url.nullIfBlank()?.let { tc.truncateMarked("payload.url", it) },
             referrer = payload.referrer.nullIfBlank()?.let { tc.truncateMarked("payload.referrer", it) },
-            name = payload.name.nullIfBlank()?.let { tc.truncateMarked("payload.name", it) },
+            name = payload.name.nullIfBlank()?.let { tc.truncateMarked("payload.name", it, MAX_NAME_LENGTH) },
             data = tc.truncateJsonNode("payload.data", normalizeDataToObject(payload.data))
         )
     )

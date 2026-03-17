@@ -147,4 +147,79 @@ class EventSanitizerTest {
         assertEquals(700, byField["payload.data.value"]?.length)
         assertEquals(600, byField["payload.data.arr[1]"]?.length)
     }
+
+    @Test
+    fun `truncates name at 50 characters while other fields truncate at 499`() {
+        val website = UUID.randomUUID()
+        val longName = "n".repeat(100)
+        val longTitle = "t".repeat(600)
+
+        val event = Event(
+            type = "pageview", payload = Event.Payload(
+                website = website,
+                name = longName,
+                title = longTitle
+            )
+        )
+
+        val result = event.sanitizeForKafkaWithReport()
+        val sanitized = result.event
+        val report = result.truncationReport
+
+        // name should be truncated to MAX_NAME_LENGTH (50)
+        assertNotNull(sanitized.payload.name)
+        assertEquals(MAX_NAME_LENGTH, sanitized.payload.name!!.length)
+        assertTrue(sanitized.payload.name.endsWith("TRUNCATED"))
+
+        // title should still truncate at MAX_LENGTH (499)
+        assertNotNull(sanitized.payload.title)
+        assertEquals(MAX_LENGTH, sanitized.payload.title!!.length)
+        assertTrue(sanitized.payload.title.endsWith("TRUNCATED"))
+
+        assertNotNull(report)
+        val byField = report!!.violations.associateBy { it.field }
+        assertEquals(100, byField["payload.name"]?.length)
+        assertEquals(600, byField["payload.title"]?.length)
+    }
+
+    @Test
+    fun `does not truncate name when within 50 character limit`() {
+        val website = UUID.randomUUID()
+        val shortName = "n".repeat(50)
+
+        val event = Event(
+            type = "pageview", payload = Event.Payload(
+                website = website,
+                name = shortName
+            )
+        )
+
+        val result = event.sanitizeForKafkaWithReport()
+
+        assertEquals(shortName, result.event.payload.name)
+        assertNull(result.truncationReport)
+    }
+
+    @Test
+    fun `truncates name at exactly 51 characters`() {
+        val website = UUID.randomUUID()
+        val name51 = "n".repeat(51)
+
+        val event = Event(
+            type = "pageview", payload = Event.Payload(
+                website = website,
+                name = name51
+            )
+        )
+
+        val result = event.sanitizeForKafkaWithReport()
+        val sanitized = result.event
+
+        assertEquals(MAX_NAME_LENGTH, sanitized.payload.name!!.length)
+        assertTrue(sanitized.payload.name.endsWith("TRUNCATED"))
+
+        val report = result.truncationReport
+        assertNotNull(report)
+        assertEquals(51, report!!.violations.first { it.field == "payload.name" }.length)
+    }
 }

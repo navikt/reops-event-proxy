@@ -6,15 +6,16 @@ import tools.jackson.databind.node.JsonNodeFactory
 import tools.jackson.databind.node.ObjectNode
 
 internal const val MAX_LENGTH = 499
+internal const val MAX_NAME_LENGTH = 50
 private const val TRUNC_SUFFIX = "TRUNCATED"
 
 internal class TruncationValidate(private val limit: Int = MAX_LENGTH) {
     private val violations = mutableListOf<TruncationViolation>()
 
-    fun truncateMarked(field: String, value: String): String {
-        if (value.length <= limit) return value
+    fun truncateMarked(field: String, value: String, fieldLimit: Int = limit): String {
+        if (value.length <= fieldLimit) return value
         violations += TruncationViolation(field = field, length = value.length)
-        val keep = (limit - TRUNC_SUFFIX.length).coerceAtLeast(0)
+        val keep = (fieldLimit - TRUNC_SUFFIX.length).coerceAtLeast(0)
         return value.take(keep) + TRUNC_SUFFIX
     }
 

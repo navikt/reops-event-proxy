@@ -19,6 +19,9 @@ class EventController(
 ) {
     private val receivedRequests: Counter = meterRegistry.counter("requests_total", "result", "recieved")
 
+    private val scriptVersionPresent: Counter = meterRegistry.counter("script_version_total", "status", "present")
+    private val scriptVersionMissing: Counter = meterRegistry.counter("script_version_total", "status", "missing")
+
     private val truncCounters: Map<String, Counter> = KNOWN_FIELDS.associateWith { field ->
         meterRegistry.counter("truncations_by_field_total", "field", field)
     }
@@ -33,7 +36,8 @@ class EventController(
         @RequestHeader(USER_AGENT, required = false) userAgent: String?,
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
         @RequestHeader(FORWARDED_FOR, required = false) forwardedFor: String?,
-    ): Mono<ResponseEntity<Response>> = processEvent(eventMono, userAgent, excludeFilters, forwardedFor)
+        @RequestHeader(SCRIPT_VERSION, required = false) scriptVersion: String?
+    ): Mono<ResponseEntity<Response>> = processEvent(eventMono, userAgent, excludeFilters, forwardedFor, scriptVersion)
 
     @PostMapping("/api/send", consumes = [MediaType.TEXT_PLAIN_VALUE])
     fun sendEventText(
@@ -41,24 +45,29 @@ class EventController(
         @RequestHeader(USER_AGENT, required = false) userAgent: String?,
         @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
         @RequestHeader(FORWARDED_FOR, required = false) forwardedFor: String?,
+        @RequestHeader(SCRIPT_VERSION, required = false) scriptVersion: String?
     ): Mono<ResponseEntity<Response>> =
-        processEvent(bodyMono.map { objectMapper.readValue(it, Event::class.java) }, userAgent, excludeFilters, forwardedFor)
+        processEvent(bodyMono.map { objectMapper.readValue(it, Event::class.java) }, userAgent, excludeFilters, forwardedFor, scriptVersion)
 
     private fun processEvent(
         eventMono: Mono<Event>,
         userAgent: String?,
         excludeFilters: String?,
         forwardedFor: String?,
+        scriptVersion: String?
     ): Mono<ResponseEntity<Response>> {
         receivedRequests.increment()
 
         val safeUserAgent = userAgent?.trim().orEmpty()
         val safeExcludeFilters = excludeFilters?.trim().takeUnless { it.isNullOrEmpty() }
         val safeForwardedFor = forwardedFor?.trim().takeUnless { it.isNullOrEmpty() }
+        val safeScriptVersion = scriptVersion?.trim().takeUnless { it.isNullOrEmpty() }
+
+        if (safeScriptVersion != null) scriptVersionPresent.increment() else scriptVersionMissing.increment()
 
         return eventMono.flatMap { event ->
             val sanitized = event.sanitizeForKafkaWithReport()
-            LOG.info("Received event website={}", event.payload.website)
+            LOG.info("Received event website={} script={}", event.payload.website, safeScriptVersion)
             recordTruncationMetrics(sanitized.truncationReport)
 
             Mono.fromCompletionStage(

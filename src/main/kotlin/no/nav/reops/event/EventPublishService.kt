@@ -16,6 +16,7 @@ import java.util.concurrent.ThreadLocalRandom
 const val USER_AGENT = "user-agent"
 const val EXCLUDE_FILTERS = "x-exclude-filters"
 const val FORWARDED_FOR = "x-forwarded-for"
+const val SCRIPT_VERSION = "x-script-version"
 
 @Service
 class EventPublishService(
