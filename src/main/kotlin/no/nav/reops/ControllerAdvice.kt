@@ -38,7 +38,8 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
         val body = ErrorResponse(
             error = "INVALID_FORMAT",
             message = "Invalid format in request body",
-            status = HttpStatus.BAD_REQUEST.value()
+            status = HttpStatus.BAD_REQUEST.value(),
+            requiredFields = REQUIRED_FIELDS
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body)
     }
@@ -53,7 +54,8 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
         val body = ErrorResponse(
             error = "INVALID_FORMAT",
             message = "Invalid format in request body",
-            status = HttpStatus.BAD_REQUEST.value()
+            status = HttpStatus.BAD_REQUEST.value(),
+            requiredFields = REQUIRED_FIELDS
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body)
     }
@@ -111,6 +113,8 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
     private companion object {
         private val LOG = LoggerFactory.getLogger(ControlAdvice::class.java)
 
+        private val REQUIRED_FIELDS = listOf("type", "payload.website (UUID)")
+
         /** Max characters to include from an exception message in logs to avoid leaking payload data. */
         private const val MAX_LOG_MESSAGE_LENGTH = 200
 
@@ -129,5 +133,8 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
 }
 
 data class ErrorResponse(
-    val error: String, val message: String, val status: Int
+    val error: String,
+    val message: String,
+    val status: Int,
+    val requiredFields: List<String>? = null
 )
