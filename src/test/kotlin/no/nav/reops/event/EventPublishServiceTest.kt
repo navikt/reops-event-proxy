@@ -16,6 +16,7 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.whenever
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.CompletableFuture
 
@@ -37,7 +38,7 @@ class EventPublishServiceTest {
         val event = mock<Event>()
         val userAgent = "KakeAgent/1.0"
         val forwardedFor = "127.0.0.1"
-        val excludeFilters = "filter1,filter2"
+        val excludeFilters = listOf(OptOutFilter.UUID)
 
         val sendFuture: CompletableFuture<SendResult<String, Event>> = CompletableFuture()
         val recordCaptor = argumentCaptor<ProducerRecord<String, Event>>()
@@ -46,7 +47,7 @@ class EventPublishServiceTest {
         val returnedFuture = service.publishEventAsync(
             event = event,
             userAgent = userAgent,
-            excludeFilters = excludeFilters,
+            optOutFilters = excludeFilters,
             forwardedFor = forwardedFor,
         )
 
@@ -65,9 +66,10 @@ class EventPublishServiceTest {
         assertNotNull(forwardedForHeader)
         assertEquals(forwardedFor, forwardedForHeader!!.value().toString(UTF_8))
 
-        val excludeHeader = record.headers().lastHeader(EXCLUDE_FILTERS)
+        val excludeHeader = record.headers().lastHeader(OPT_OUT_FILTERS)
         assertNotNull(excludeHeader)
-        assertEquals(excludeFilters, excludeHeader!!.value().toString(UTF_8))
+        val expectedJson = jacksonObjectMapper().writeValueAsString(excludeFilters)
+        assertEquals(expectedJson, excludeHeader!!.value().toString(UTF_8))
 
         // Complete the future and verify the returned future completes
         val mockSendResult = mock<SendResult<String, Event>>()
@@ -96,7 +98,7 @@ class EventPublishServiceTest {
         val event = mock<Event>()
         val userAgent = "JUnit/5"
         val forwardedFor = "127.0.0.1"
-        val excludeFilters = "filter1,filter2"
+        val excludeFilters = listOf(OptOutFilter.UUID)
 
         val sendFuture: CompletableFuture<SendResult<String, Event>> = CompletableFuture()
         whenever(kafkaTemplate.send(any<ProducerRecord<String, Event>>())).thenReturn(sendFuture)
@@ -104,7 +106,7 @@ class EventPublishServiceTest {
         val returnedFuture = service.publishEventAsync(
             event = event,
             userAgent = userAgent,
-            excludeFilters = excludeFilters,
+            optOutFilters = excludeFilters,
             forwardedFor = forwardedFor,
         )
 

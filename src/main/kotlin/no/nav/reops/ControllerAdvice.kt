@@ -22,7 +22,7 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
     @ExceptionHandler(InvalidEventException::class)
     fun handleInvalidEvent(ex: InvalidEventException): ResponseEntity<ErrorResponse> {
         failedRequests.increment()
-        LOG.info("Invalid event: {}", ex.message)
+        LOG.error("Invalid event: {}", ex.message)
         val body = ErrorResponse(
             error = "INVALID_EVENT",
             message = ex.message ?: "Invalid event payload",
@@ -34,7 +34,7 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
     @ExceptionHandler(JacksonException::class)
     fun handleJacksonException(ex: JacksonException): ResponseEntity<ErrorResponse> {
         failedRequests.increment()
-        LOG.info("Invalid request body: {}", ex.javaClass.simpleName)
+        LOG.error("Invalid request body: {}", ex.javaClass.simpleName)
         val body = ErrorResponse(
             error = "INVALID_FORMAT",
             message = "Invalid format in request body",
@@ -50,7 +50,7 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
         // Log only the exception class and a sanitized reason — never the raw message
         // which may contain deserialized field values from the request body
         val reason = sanitizeMessage(ex)
-        LOG.info("Invalid request body: {}", reason)
+        LOG.error("Invalid request body: {}", reason)
         val body = ErrorResponse(
             error = "INVALID_FORMAT",
             message = "Invalid format in request body",
@@ -63,7 +63,7 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
     @ExceptionHandler(UnsupportedMediaTypeStatusException::class)
     fun handleUnsupportedMediaType(ex: UnsupportedMediaTypeStatusException): ResponseEntity<ErrorResponse> {
         failedRequests.increment()
-        LOG.info("Unsupported media type: {}", ex.contentType)
+        LOG.error("Unsupported media type: {}", ex.contentType)
         val body = ErrorResponse(
             error = "UNSUPPORTED_MEDIA_TYPE",
             message = "Content-Type must be application/json",
@@ -75,7 +75,7 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
     @ExceptionHandler(MethodNotAllowedException::class)
     fun handleMethodNotAllowed(ex: MethodNotAllowedException): ResponseEntity<ErrorResponse> {
         failedRequests.increment()
-        LOG.info("Method not allowed: {}", ex.httpMethod)
+        LOG.error("Method not allowed: {}", ex.httpMethod)
         val body = ErrorResponse(
             error = "METHOD_NOT_ALLOWED",
             message = "HTTP method ${ex.httpMethod} is not supported",
@@ -88,13 +88,25 @@ class ControlAdvice(meterRegistry: MeterRegistry) {
     fun handleResponseStatus(ex: ResponseStatusException): ResponseEntity<ErrorResponse> {
         failedRequests.increment()
         val status = HttpStatus.valueOf(ex.statusCode.value())
-        LOG.info("Response status exception: {} {}", status.value(), status.reasonPhrase)
+        LOG.error("Response status exception: {} {}", status.value(), status.reasonPhrase)
         val body = ErrorResponse(
             error = status.reasonPhrase.uppercase().replace(' ', '_'),
             message = status.reasonPhrase,
             status = status.value()
         )
         return ResponseEntity.status(status).body(body)
+    }
+
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgument(ex: IllegalArgumentException): ResponseEntity<ErrorResponse> {
+        failedRequests.increment()
+        LOG.error("Bad request: {}", ex.message?.take(200))
+        val body = ErrorResponse(
+            error = "BAD_REQUEST",
+            message = ex.message ?: "Invalid request",
+            status = HttpStatus.BAD_REQUEST.value()
+        )
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body)
     }
 
     @ExceptionHandler(Exception::class)

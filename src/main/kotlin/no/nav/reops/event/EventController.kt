@@ -34,32 +34,32 @@ class EventController(
     fun sendEventJson(
         @RequestBody eventMono: Mono<Event>,
         @RequestHeader(USER_AGENT, required = false) userAgent: String?,
-        @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
+        @RequestHeader(OPT_OUT_FILTERS, required = false) optOutFilters: String?,
         @RequestHeader(FORWARDED_FOR, required = false) forwardedFor: String?,
         @RequestHeader(SCRIPT_VERSION, required = false) scriptVersion: String?
-    ): Mono<ResponseEntity<Response>> = processEvent(eventMono, userAgent, excludeFilters, forwardedFor, scriptVersion)
+    ): Mono<ResponseEntity<Response>> = processEvent(eventMono, userAgent, optOutFilters, forwardedFor, scriptVersion)
 
     @PostMapping("/api/send", consumes = [MediaType.TEXT_PLAIN_VALUE])
     fun sendEventText(
         @RequestBody bodyMono: Mono<String>,
         @RequestHeader(USER_AGENT, required = false) userAgent: String?,
-        @RequestHeader(EXCLUDE_FILTERS, required = false) excludeFilters: String?,
+        @RequestHeader(OPT_OUT_FILTERS, required = false) optOutFilters: String?,
         @RequestHeader(FORWARDED_FOR, required = false) forwardedFor: String?,
         @RequestHeader(SCRIPT_VERSION, required = false) scriptVersion: String?
     ): Mono<ResponseEntity<Response>> =
-        processEvent(bodyMono.map { objectMapper.readValue(it, Event::class.java) }, userAgent, excludeFilters, forwardedFor, scriptVersion)
+        processEvent(bodyMono.map { objectMapper.readValue(it, Event::class.java) }, userAgent, optOutFilters, forwardedFor, scriptVersion)
 
     private fun processEvent(
         eventMono: Mono<Event>,
         userAgent: String?,
-        excludeFilters: String?,
+        optOutFilters: String?,
         forwardedFor: String?,
         scriptVersion: String?
     ): Mono<ResponseEntity<Response>> {
         receivedRequests.increment()
 
         val safeUserAgent = userAgent?.trim().orEmpty()
-        val safeExcludeFilters = excludeFilters?.trim().takeUnless { it.isNullOrEmpty() }
+        val safeOptOutFilters = OptOutFilter.parseHeader(optOutFilters)
         val safeForwardedFor = forwardedFor?.trim().takeUnless { it.isNullOrEmpty() }
         val safeScriptVersion = scriptVersion?.trim().takeUnless { it.isNullOrEmpty() }
 
@@ -74,7 +74,7 @@ class EventController(
                 eventPublishService.publishEventAsync(
                     event = sanitized.event,
                     userAgent = safeUserAgent,
-                    excludeFilters = safeExcludeFilters,
+                    optOutFilters = safeOptOutFilters,
                     forwardedFor = safeForwardedFor
                 )
             ).map {
