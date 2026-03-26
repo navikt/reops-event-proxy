@@ -1,7 +1,7 @@
 spring:
   kafka:
     bootstrap-servers: localhost:9094
-    topic: test2
+    topic: raw
     properties:
       security.protocol: PLAINTEXT
       auto.offset.reset: earliest

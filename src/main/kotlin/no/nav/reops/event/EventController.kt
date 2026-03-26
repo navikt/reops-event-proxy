@@ -21,6 +21,8 @@ class EventController(
 
     private val scriptVersionPresent: Counter = meterRegistry.counter("script_version_total", "status", "present")
     private val scriptVersionMissing: Counter = meterRegistry.counter("script_version_total", "status", "missing")
+    private val optOutPresent: Counter = meterRegistry.counter("opt_out_total", "status", "present")
+    private val optOutMissing: Counter = meterRegistry.counter("opt_out_total", "status", "missing")
 
     private val truncCounters: Map<String, Counter> = KNOWN_FIELDS.associateWith { field ->
         meterRegistry.counter("truncations_by_field_total", "field", field)
@@ -64,6 +66,7 @@ class EventController(
         val safeScriptVersion = scriptVersion?.trim().takeUnless { it.isNullOrEmpty() }
 
         if (safeScriptVersion != null) scriptVersionPresent.increment() else scriptVersionMissing.increment()
+        if (optOutFilters != null) optOutPresent.increment() else optOutMissing.increment()
 
         return eventMono.flatMap { event ->
             val sanitized = event.sanitizeForKafkaWithReport()
