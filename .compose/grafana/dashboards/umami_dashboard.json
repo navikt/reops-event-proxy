@@ -2044,8 +2044,8 @@
     "list": [
       {
         "current": {
-          "text": "team-researchops.reops-insight-event",
-          "value": "team-researchops.reops-insight-event"
+          "text": "raw",
+          "value": "raw"
         },
         "hide": 2,
         "label": "Topic",

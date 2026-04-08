@@ -45,19 +45,19 @@ spec:
         {
           "topics": [
             {
-              "name": "team-researchops.reops-insight-event",
+              "name": "team-researchops.analytics-raw-event",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
             },
             {
-              "name": "team-researchops.reops-insight-event-retry",
+              "name": "team-researchops.analytics-raw-retry",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
             },
             {
-              "name": "team-researchops.reops-insight-event-dlt",
+              "name": "team-researchops.analytics-raw-dlt",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
