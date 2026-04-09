@@ -23,7 +23,7 @@ spec:
     failureThreshold: 3
   replicas:
     min: 2
-    max: 6
+    max: 10
     cpuThresholdPercentage: 50
   ingresses:
     - "https://reops-event-proxy.nav.no"
