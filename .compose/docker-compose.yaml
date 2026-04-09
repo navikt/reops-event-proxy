@@ -237,8 +237,60 @@ services:
     cpus: 0.5
     mem_limit: 256m
 
+  # -- Postgres --
+#  umami-db:
+#    image: postgres:15-alpine
+#    container_name: umami-db
+#    restart: unless-stopped
+#    init: true
+#    stop_grace_period: 1s
+#    environment:
+#      POSTGRES_DB: umami
+#      POSTGRES_USER: umami
+#      POSTGRES_PASSWORD: umami
+#    ports:
+#      - "127.0.0.1:15432:5432"
+#    volumes:
+#      - umami-db-data:/var/lib/postgresql/data
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+#      interval: 60s
+#      timeout: 60s
+#      retries: 10
+#      start_period: 5s
+#    cpus: 0.5
+#    mem_limit: 512m
+#
+#  # -- Umami --
+#  umami:
+#    image: ghcr.io/umami-software/umami:latest
+#    container_name: umami
+#    restart: unless-stopped
+#    init: true
+#    stop_grace_period: 1s
+#    depends_on:
+#      umami-db:
+#        condition: service_healthy
+#    ports:
+#      - "3000:3000"
+#    environment:
+#      DATABASE_URL: postgresql://umami:umami@umami-db:5432/umami
+#      APP_SECRET: secret
+#      NODE_OPTIONS: "--max_old_space_size=256"
+#      DISABLE_BOT_CHECK: "1"
+#      SKIP_LOCATION_HEADERS: "1"
+#    healthcheck:
+#      test: ["CMD-SHELL", "curl -fs http://localhost:3000/api/heartbeat || exit 1"]
+#      interval: 60s
+#      timeout: 60s
+#      retries: 10
+#      start_period: 5s
+#    cpus: 0.5
+#    mem_limit: 512m
+
 volumes:
   postgres_data: {}
   prometheus_data: {}
   grafana_data: {}
   opensearch_data: {}
+#  umami-db-data: {}
