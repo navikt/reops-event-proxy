@@ -1,7 +1,7 @@
 apiVersion: kafka.nais.io/v1
 kind: Topic
 metadata:
-  name: analytics-raw
+  name: analytics-clean
   namespace: team-researchops
   labels:
     team: team-researchops
@@ -16,13 +16,10 @@ spec:
     retentionHours: 1
   acl:
     - team: team-researchops
-      application: reops-event-proxy
+      application: reops-scrubs
       access: write
     - team: team-researchops
-      application: reops-umami-consumer
-      access: read
-    - team: team-researchops
-      application: reops-scrubs
+      application: reops-umami
       access: read
     - team: team-researchops
       application: reops-kafka-manager
@@ -31,7 +28,7 @@ spec:
 apiVersion: kafka.nais.io/v1
 kind: Topic
 metadata:
-  name: analytics-raw-retry
+  name: analytics-clean-retry
   namespace: team-researchops
   labels:
     team: team-researchops
@@ -46,10 +43,7 @@ spec:
     retentionHours: 2
   acl:
     - team: team-researchops
-      application: reops-umami-consumer
-      access: readwrite
-    - team: team-researchops
-      application: reops-scrubs
+      application: reops-umami
       access: readwrite
     - team: team-researchops
       application: reops-kafka-manager
@@ -58,7 +52,7 @@ spec:
 apiVersion: kafka.nais.io/v1
 kind: Topic
 metadata:
-  name: analytics-raw-dlt
+  name: analytics-clean-dlt
   namespace: team-researchops
   labels:
     team: team-researchops
@@ -73,10 +67,7 @@ spec:
     retentionHours: 168
   acl:
     - team: team-researchops
-      application: reops-umami-consumer
-      access: readwrite
-    - team: team-researchops
-      application: reops-scrubs
+      application: reops-umami
       access: readwrite
     - team: team-researchops
       application: reops-kafka-manager

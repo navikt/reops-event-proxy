@@ -1,7 +1,7 @@
 apiVersion: kafka.nais.io/v1
 kind: Topic
 metadata:
-  name: analytics-raw
+  name: analytics-enriched
   namespace: team-researchops
   labels:
     team: team-researchops
@@ -16,13 +16,13 @@ spec:
     retentionHours: 1
   acl:
     - team: team-researchops
-      application: reops-event-proxy
+      application: reops-umami
       access: write
     - team: team-researchops
-      application: reops-umami-consumer
+      application: reops-bigquery
       access: read
     - team: team-researchops
-      application: reops-scrubs
+      application: reops-opensearch
       access: read
     - team: team-researchops
       application: reops-kafka-manager
@@ -31,34 +31,7 @@ spec:
 apiVersion: kafka.nais.io/v1
 kind: Topic
 metadata:
-  name: analytics-raw-retry
-  namespace: team-researchops
-  labels:
-    team: team-researchops
-  annotations:
-    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
-spec:
-  pool: nav-dev
-  config:
-    cleanupPolicy: delete
-    minimumInSyncReplicas: 1
-    partitions: 1
-    retentionHours: 2
-  acl:
-    - team: team-researchops
-      application: reops-umami-consumer
-      access: readwrite
-    - team: team-researchops
-      application: reops-scrubs
-      access: readwrite
-    - team: team-researchops
-      application: reops-kafka-manager
-      access: read
----
-apiVersion: kafka.nais.io/v1
-kind: Topic
-metadata:
-  name: analytics-raw-dlt
+  name: analytics-bigquery-dlt
   namespace: team-researchops
   labels:
     team: team-researchops
@@ -73,10 +46,31 @@ spec:
     retentionHours: 168
   acl:
     - team: team-researchops
-      application: reops-umami-consumer
+      application: reops-bigquery
       access: readwrite
     - team: team-researchops
-      application: reops-scrubs
+      application: reops-kafka-manager
+      access: read
+---
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: analytics-opensearch-dlt
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+spec:
+  pool: nav-dev
+  config:
+    cleanupPolicy: delete
+    minimumInSyncReplicas: 1
+    partitions: 1
+    retentionHours: 168
+  acl:
+    - team: team-researchops
+      application: reops-opensearch
       access: readwrite
     - team: team-researchops
       application: reops-kafka-manager
