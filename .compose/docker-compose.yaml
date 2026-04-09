@@ -143,58 +143,102 @@ services:
     cpus: 0.5
     mem_limit: 512m
 
-  # -- Postgres --
-  umami-db:
-    image: postgres:15-alpine
-    container_name: umami-db
+  # -- OpenSearch --
+  opensearch:
+    image: opensearchproject/opensearch:3.5.0
+    container_name: opensearch
     restart: unless-stopped
     init: true
-    stop_grace_period: 1s
+    stop_grace_period: 5s
     environment:
-      POSTGRES_DB: umami
-      POSTGRES_USER: umami
-      POSTGRES_PASSWORD: umami
+      discovery.type: single-node
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "V3ry_Str0ng#Passw0rd!"
+      OPENSEARCH_JAVA_OPTS: "-Xms1g -Xmx1g"
+      plugins.security.disabled: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      aux.transport.types: transport-grpc
+      aux.transport.transport-grpc.port: "9400"
     ports:
-      - "127.0.0.1:15432:5432"
+      - "9200:9200"
+      - "9400:9400"
+      - "9600:9600"
     volumes:
-      - umami-db-data:/var/lib/postgresql/data
+      - opensearch_data:/usr/share/opensearch/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
-      interval: 60s
-      timeout: 60s
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
       retries: 10
-      start_period: 5s
-    cpus: 0.5
-    mem_limit: 512m
+      start_period: 30s
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    cpus: 1.0
+    mem_limit: 2g
 
-  # -- Umami --
-  umami:
-    image: ghcr.io/umami-software/umami:latest
-    container_name: umami
+  # -- OpenSearch init (index template + dashboard) --
+  opensearch-init:
+    image: curlimages/curl:latest
+    container_name: opensearch-init
+    depends_on:
+      opensearch:
+        condition: service_healthy
+      opensearch-dashboards:
+        condition: service_healthy
+    volumes:
+      - ./opensearch/events-template.json:/templates/events-template.json:ro
+      - ./opensearch/reops-umami-dashboard.ndjson:/templates/reops-umami-dashboard.ndjson:ro
+      - ./opensearch/init.sh:/init.sh:ro
+    entrypoint: ["/bin/sh", "/init.sh"]
+    restart: "no"
+
+  # -- OpenSearch Dashboards --
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:3.5.0
+    container_name: opensearch-dashboards
     restart: unless-stopped
     init: true
     stop_grace_period: 1s
     depends_on:
-      umami-db:
+      opensearch:
         condition: service_healthy
-    ports:
-      - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://umami:umami@umami-db:5432/umami
-      APP_SECRET: secret
-      NODE_OPTIONS: "--max_old_space_size=256"
-      DISABLE_BOT_CHECK: "1"
-      SKIP_LOCATION_HEADERS: "1"
+      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: "true"
+    ports:
+      - "5601:5601"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fs http://localhost:3000/api/heartbeat || exit 1"]
+      test: ["CMD-SHELL", "curl -fs http://localhost:5601/api/status || exit 1"]
       interval: 60s
       timeout: 60s
       retries: 10
-      start_period: 5s
+      start_period: 30s
     cpus: 0.5
     mem_limit: 512m
 
+  # -- PostgreSQL (reops-umami) --
+  postgres:
+    image: postgres:17-alpine
+    container_name: reops-umami-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: reops-umami
+      POSTGRES_USER: reops-umami
+      POSTGRES_PASSWORD: reops-umami
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reops-umami"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    cpus: 0.5
+    mem_limit: 256m
+
 volumes:
-  umami-db-data: {}
+  postgres_data: {}
   prometheus_data: {}
   grafana_data: {}
+  opensearch_data: {}

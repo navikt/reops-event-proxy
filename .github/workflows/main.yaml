@@ -64,11 +64,26 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v6
-      - name: Deploy kafka to Dev
+      - name: Deploy analytics-raw to dev
         uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/topics/analytics-raw-dev.yaml
+      - name: Deploy analytics-clean to dev
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/topics/analytics-clean-dev.yaml
+      - name: Deploy analytics-enriched to dev
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/topics/analytics-enriched-dev.yaml
+      - name: Deploy analytics-website to dev
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/topics/analytics-website-dev.yaml
 
   deploy-alert-dev:
     runs-on: ubuntu-latest
