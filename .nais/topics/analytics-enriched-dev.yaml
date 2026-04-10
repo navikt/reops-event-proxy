@@ -22,7 +22,7 @@ spec:
       application: reops-bigquery
       access: read
     - team: team-researchops
-      application: reops-opensearch
+      application: reops-opensearch-consumer
       access: read
     - team: team-researchops
       application: reops-kafka-manager
@@ -70,7 +70,7 @@ spec:
     retentionHours: 168
   acl:
     - team: team-researchops
-      application: reops-opensearch
+      application: reops-opensearch-consumer
       access: readwrite
     - team: team-researchops
       application: reops-kafka-manager
