@@ -45,7 +45,7 @@ spec:
         {
           "topics": [
             {
-              "name": "team-researchops.analytics-raw-event",
+              "name": "team-researchops.analytics-raw",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
