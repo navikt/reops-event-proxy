@@ -23,4 +23,4 @@ spec:
       access: read
     - team: team-researchops
       application: reops-kafka-manager
-      access: read
+      access: readwrite

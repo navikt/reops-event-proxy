@@ -23,7 +23,7 @@ spec:
       access: read
     - team: team-researchops
       application: reops-kafka-manager
-      access: read
+      access: readwrite
 ---
 apiVersion: kafka.nais.io/v1
 kind: Topic
@@ -47,7 +47,7 @@ spec:
       access: readwrite
     - team: team-researchops
       application: reops-kafka-manager
-      access: read
+      access: readwrite
 ---
 apiVersion: kafka.nais.io/v1
 kind: Topic
@@ -71,4 +71,4 @@ spec:
       access: readwrite
     - team: team-researchops
       application: reops-kafka-manager
-      access: read
+      access: readwrite
