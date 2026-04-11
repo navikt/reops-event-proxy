@@ -19,7 +19,7 @@ spec:
       application: reops-umami
       access: write
     - team: team-researchops
-      application: reops-bigquery
+      application: reops-bigquery-consumer
       access: read
     - team: team-researchops
       application: reops-opensearch-consumer
@@ -46,7 +46,7 @@ spec:
     retentionHours: 168
   acl:
     - team: team-researchops
-      application: reops-bigquery
+      application: reops-bigquery-consumer
       access: readwrite
     - team: team-researchops
       application: reops-kafka-manager

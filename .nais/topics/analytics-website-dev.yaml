@@ -19,8 +19,8 @@ spec:
       application: reops-umami
       access: write
     - team: team-researchops
-      application: reops-bigquery
-      access: read
+      application: reops-bigquery-consumer
+      access: readwrite
     - team: team-researchops
       application: reops-kafka-manager
       access: readwrite
