@@ -123,6 +123,7 @@ services:
     stop_grace_period: 1s
     depends_on:
       - prometheus
+      - tempo
     ports:
       - "3001:3000"
     environment:
@@ -142,6 +143,46 @@ services:
       start_period: 5s
     cpus: 0.5
     mem_limit: 512m
+
+  # -- Tempo (distributed tracing backend) --
+  tempo:
+    image: grafana/tempo:2.7.2
+    container_name: tempo
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 1s
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"     # tempo query API
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3200/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+    cpus: 0.5
+    mem_limit: 512m
+
+  # -- OpenTelemetry Collector --
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 1s
+    depends_on:
+      tempo:
+        condition: service_healthy
+    volumes:
+      - ./otel-collector/config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+    cpus: 0.5
+    mem_limit: 256m
 
   # -- OpenSearch --
   opensearch:
@@ -293,4 +334,5 @@ volumes:
   prometheus_data: {}
   grafana_data: {}
   opensearch_data: {}
+  tempo_data: {}
 #  umami-db-data: {}

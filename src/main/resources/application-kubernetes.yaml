@@ -21,9 +21,3 @@ logging:
   structured:
     format:
       console: logstash
-
-management:
-  otlp:
-    metrics:
-      export:
-        enabled: false
