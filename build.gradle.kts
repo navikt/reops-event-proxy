@@ -42,6 +42,9 @@ dependencies {
 	implementation("at.yawk.lz4:lz4-java:1.10.4")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("io.micrometer:micrometer-registry-prometheus")
+	implementation("io.micrometer:micrometer-tracing-bridge-otel")
+	implementation("io.opentelemetry:opentelemetry-exporter-otlp")
+	implementation("org.springframework.boot:spring-boot-starter-opentelemetry")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

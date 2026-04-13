@@ -21,3 +21,14 @@ logging:
   structured:
     format:
       console: logstash
+
+management:
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          transport: grpc
+  otlp:
+    metrics:
+      export:
+        enabled: false

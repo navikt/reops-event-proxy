@@ -29,6 +29,10 @@ spec:
     - "https://reops-event-proxy.intern.dev.nav.no"
     - "https://reops-event-proxy.ansatt.dev.nav.no"
     - "https://reops-event-proxy.ekstern.dev.nav.no"
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: sdk
   prometheus:
     enabled: true
     path: /internal/prometheus
