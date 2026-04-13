@@ -46,6 +46,9 @@ management:
       base-path: /internal/
       exposure:
         include: info, health, metrics, prometheus
+  tracing:
+    sampling:
+      probability: 1.0
 
 logging:
   level:
