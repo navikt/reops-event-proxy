@@ -3,6 +3,8 @@ spring:
     name: reops-event-proxy
   kafka:
     bootstrap-servers: localhost:9094
+    template:
+      observation-enabled: true
     producer:
       properties:
         max.block.ms: 3000              # If producer buffer/metadata isn't ready, block up to 3s (enough for SSL handshake + metadata fetch)
