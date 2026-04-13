@@ -1,6 +1,8 @@
 spring:
   application:
     name: reops-event-proxy
+  reactor:
+    context-propagation: auto
   kafka:
     bootstrap-servers: localhost:9094
     template:
