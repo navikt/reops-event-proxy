@@ -26,11 +26,26 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v6
-      - name: Deploy kafka to Prod
+      - name: Deploy analytics-raw to Prod
         uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: prod-gcp
           RESOURCE: .nais/topics/analytics-raw-prod.yaml
+      - name: Deploy analytics-clean to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/topics/analytics-clean-prod.yaml
+      - name: Deploy analytics-enriched to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/topics/analytics-enriched-prod.yaml
+      - name: Deploy analytics-website to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/topics/analytics-website-prod.yaml
 
   deploy-alert-prod:
     runs-on: ubuntu-latest
