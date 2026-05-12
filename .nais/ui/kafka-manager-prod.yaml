@@ -61,6 +61,24 @@ spec:
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
+            },
+            {
+              "name": "team-researchops.analytics-clean",
+              "location": "AIVEN",
+              "keyDeserializerType": "STRING",
+              "valueDeserializerType": "STRING"
+            },
+            {
+              "name": "team-researchops.analytics-enriched",
+              "location": "AIVEN",
+              "keyDeserializerType": "STRING",
+              "valueDeserializerType": "STRING"
+            },
+            {
+              "name": "team-researchops.analytics-website",
+              "location": "AIVEN",
+              "keyDeserializerType": "STRING",
+              "valueDeserializerType": "STRING"
             }
           ]
         }

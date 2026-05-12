@@ -1,0 +1,77 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: analytics-enriched
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+spec:
+  pool: nav-prod
+  config:
+    cleanupPolicy: delete
+    minimumInSyncReplicas: 1
+    partitions: 30
+    retentionHours: 168
+  acl:
+    - team: team-researchops
+      application: reops-umami
+      access: write
+    - team: team-researchops
+      application: reops-bigquery-consumer
+      access: read
+    - team: team-researchops
+      application: reops-opensearch-consumer
+      access: read
+    - team: team-researchops
+      application: reops-kafka-manager
+      access: readwrite
+---
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: analytics-bigquery-dlt
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+spec:
+  pool: nav-prod
+  config:
+    cleanupPolicy: delete
+    minimumInSyncReplicas: 1
+    partitions: 1
+    retentionHours: 168
+  acl:
+    - team: team-researchops
+      application: reops-bigquery-consumer
+      access: readwrite
+    - team: team-researchops
+      application: reops-kafka-manager
+      access: readwrite
+---
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: analytics-opensearch-dlt
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+spec:
+  pool: nav-prod
+  config:
+    cleanupPolicy: delete
+    minimumInSyncReplicas: 1
+    partitions: 1
+    retentionHours: 168
+  acl:
+    - team: team-researchops
+      application: reops-opensearch-consumer
+      access: readwrite
+    - team: team-researchops
+      application: reops-kafka-manager
+      access: readwrite
