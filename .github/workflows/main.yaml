@@ -1,5 +1,5 @@
-name: "Deploy"
-run-name: "Deploy"
+name: "Deploy Dev"
+run-name: "Deploy Dev @ ${{ github.ref_name }} — ${{ github.sha }}"
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
       - main
     paths-ignore:
       - '.compose/**'
-  workflow_dispatch:
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -53,6 +52,12 @@ jobs:
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           build_args: CI=true
+      - name: Show image and SHA for later prod deploy
+        run: |
+          echo "========================================"
+          echo "image=${{ steps.docker-build-push.outputs.image }}"
+          echo "version=${{ github.sha }}"
+          echo "========================================"
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
 
@@ -99,34 +104,6 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/alerts/total-request-fails.yaml
 
-  deploy-kafka-prod:
-    runs-on: ubuntu-latest
-    environment: prod
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v6
-      - name: Deploy kafka to Prod
-        uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/topics/analytics-raw-prod.yaml
-
-  deploy-alert-prod:
-    runs-on: ubuntu-latest
-    environment: prod
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v6
-      - name: Deploy alerts to Prod
-        uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/alerts/total-request-fails.yaml
-
   deploy-kafka-manager-dev:
     needs: [test, docker, deploy-kafka-dev]
     runs-on: ubuntu-latest
@@ -143,22 +120,6 @@ jobs:
           RESOURCE: .nais/ui/kafka-manager-dev.yaml
           VAR: image=${{ needs.docker.outputs.image }}
 
-  deploy-kafka-manager-prod:
-    needs: [test, docker, deploy-kafka-prod]
-    runs-on: ubuntu-latest
-    environment: prod
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v6
-      - name: Deploy kafka-manager to Prod
-        uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/ui/kafka-manager-prod.yaml
-          VAR: image=${{ needs.docker.outputs.image }}
-
   deploy-application-dev:
     needs: [test, docker, deploy-kafka-dev]
     runs-on: ubuntu-latest
@@ -173,20 +134,4 @@ jobs:
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/nais-dev.yaml
-          VAR: image=${{ needs.docker.outputs.image }}
-
-  deploy-application-prod:
-    needs: [docker, deploy-kafka-prod, deploy-application-dev]
-    runs-on: ubuntu-latest
-    environment: prod
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v6
-      - name: Deploy application to Prod
-        uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/nais-prod.yaml
           VAR: image=${{ needs.docker.outputs.image }}

@@ -1,0 +1,88 @@
+name: "Deploy Prod (Manual)"
+run-name: "Deploy Prod (Manual) — ${{ github.event.inputs.version }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "Image to deploy (copy from dev deploy run output)"
+        required: true
+        type: string
+      version:
+        description: "SHA to deploy (copy from dev deploy run output)"
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-prod-manual
+  cancel-in-progress: false
+
+jobs:
+  deploy-kafka-prod:
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy kafka to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/topics/analytics-raw-prod.yaml
+
+  deploy-alert-prod:
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy alerts to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/alerts/total-request-fails.yaml
+
+  deploy-kafka-manager-prod:
+    needs: [deploy-kafka-prod]
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy kafka-manager to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/ui/kafka-manager-prod.yaml
+          VAR: image=${{ github.event.inputs.image }},version=${{ github.event.inputs.version }}
+
+  deploy-application-prod:
+    needs: [deploy-kafka-prod]
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy application to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/nais-prod.yaml
+          VAR: image=${{ github.event.inputs.image }},version=${{ github.event.inputs.version }}
+
+      - name: Create deployment tag
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          TAG_NAME="prod-$(date -u +'%Y.%m.%d-%H%M%S')"
+          git tag -a "$TAG_NAME" -m "Production deployment of ${{ github.event.inputs.version }}"
+          git push origin "$TAG_NAME"
