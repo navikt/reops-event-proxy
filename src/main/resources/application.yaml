@@ -27,9 +27,6 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
-app:
-  secret: ${APP_SECRET:}
-
 server:
   http2:
     enabled: true
