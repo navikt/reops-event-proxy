@@ -16,7 +16,7 @@ spec:
     retentionHours: 1
   acl:
     - team: team-researchops
-      application: reops-scrubs
+      application: reops-raw-to-clean
       access: write
     - team: team-researchops
       application: reops-umami
