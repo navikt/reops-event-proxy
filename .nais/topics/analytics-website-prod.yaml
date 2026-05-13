@@ -19,7 +19,7 @@ spec:
       application: reops-clean-to-enriched
       access: write
     - team: team-researchops
-      application: reops-bigquery-consumer
+      application: reops-enriched-to-bigquery
       access: readwrite
     - team: team-researchops
       application: reops-kafka-manager
