@@ -16,7 +16,7 @@ spec:
     retentionHours: 1
   acl:
     - team: team-researchops
-      application: reops-umami
+      application: reops-clean-to-enriched
       access: write
     - team: team-researchops
       application: reops-bigquery-consumer

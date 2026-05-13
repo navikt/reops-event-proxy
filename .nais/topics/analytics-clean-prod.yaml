@@ -19,7 +19,7 @@ spec:
       application: reops-raw-to-clean
       access: write
     - team: team-researchops
-      application: reops-umami
+      application: reops-clean-to-enriched
       access: read
     - team: team-researchops
       application: reops-kafka-manager
@@ -43,7 +43,7 @@ spec:
     retentionHours: 24
   acl:
     - team: team-researchops
-      application: reops-umami
+      application: reops-clean-to-enriched
       access: readwrite
     - team: team-researchops
       application: reops-kafka-manager
@@ -67,7 +67,7 @@ spec:
     retentionHours: 168
   acl:
     - team: team-researchops
-      application: reops-umami
+      application: reops-clean-to-enriched
       access: readwrite
     - team: team-researchops
       application: reops-kafka-manager
