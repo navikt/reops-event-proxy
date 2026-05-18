@@ -110,7 +110,8 @@ class EventController(
                     optOutFilters = safeOptOutFilters,
                     forwardedFor = safeForwardedFor,
                     sessionId = resolved.sessionId,
-                    visitId = resolved.visitId
+                    visitId = resolved.visitId,
+                    createdAt = resolved.createdAt
                 )
             ).map {
                 ResponseEntity.status(HttpStatus.CREATED).body(

@@ -10,6 +10,7 @@ import org.springframework.kafka.support.SendResult
 import org.springframework.stereotype.Service
 import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.nio.charset.StandardCharsets.UTF_8
+import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ThreadLocalRandom
@@ -20,6 +21,7 @@ const val FORWARDED_FOR = "x-forwarded-for"
 const val SCRIPT_VERSION = "x-script-version"
 const val SESSION_ID_HEADER = "x-reops-session-id"
 const val VISIT_ID_HEADER = "x-reops-visit-id"
+const val CREATED_AT_HEADER = "x-reops-created-at"
 
 @Service
 class EventPublishService(
@@ -38,7 +40,8 @@ class EventPublishService(
         optOutFilters: List<OptOutFilter>?,
         forwardedFor: String?,
         sessionId: UUID,
-        visitId: UUID
+        visitId: UUID,
+        createdAt: Instant
     ): CompletableFuture<SendResult<String, Event>> {
         val key = ThreadLocalRandom.current().let { UUID(it.nextLong(), it.nextLong()) }.toString()
         val record = ProducerRecord(topic, key, event).apply {
@@ -49,6 +52,7 @@ class EventPublishService(
             }
             headers().add(SESSION_ID_HEADER, sessionId.toString().toByteArray(UTF_8))
             headers().add(VISIT_ID_HEADER, visitId.toString().toByteArray(UTF_8))
+            headers().add(CREATED_AT_HEADER, createdAt.toString().toByteArray(UTF_8))
         }
 
         return runCatching {
