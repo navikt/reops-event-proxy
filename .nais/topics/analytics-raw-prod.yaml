@@ -22,6 +22,9 @@ spec:
       application: reops-umami-consumer
       access: read
     - team: team-researchops
+      application: reops-raw-to-clean
+      access: read
+    - team: team-researchops
       application: reops-kafka-manager
       access: read
 ---
@@ -46,6 +49,9 @@ spec:
       application: reops-umami-consumer
       access: readwrite
     - team: team-researchops
+      application: reops-raw-to-clean
+      access: readwrite
+    - team: team-researchops
       application: reops-kafka-manager
       access: read
 ---
@@ -68,6 +74,9 @@ spec:
   acl:
     - team: team-researchops
       application: reops-umami-consumer
+      access: readwrite
+    - team: team-researchops
+      application: reops-raw-to-clean
       access: readwrite
     - team: team-researchops
       application: reops-kafka-manager
