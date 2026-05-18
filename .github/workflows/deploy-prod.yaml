@@ -1,15 +1,11 @@
 name: "Deploy Prod (Manual)"
-run-name: "Deploy Prod (Manual) — ${{ github.event.inputs.version }}"
+run-name: "Deploy Prod (Manual)"
 
 on:
   workflow_dispatch:
     inputs:
       image:
         description: "Image to deploy (copy from dev deploy run output)"
-        required: true
-        type: string
-      version:
-        description: "SHA to deploy (copy from dev deploy run output)"
         required: true
         type: string
 
@@ -75,7 +71,7 @@ jobs:
         env:
           CLUSTER: prod-gcp
           RESOURCE: .nais/ui/kafka-manager-prod.yaml
-          VAR: image=${{ github.event.inputs.image }},version=${{ github.event.inputs.version }}
+          VAR: image=${{ github.event.inputs.image }}
 
   deploy-application-prod:
     needs: [deploy-kafka-prod]
@@ -91,7 +87,7 @@ jobs:
         env:
           CLUSTER: prod-gcp
           RESOURCE: .nais/nais-prod.yaml
-          VAR: image=${{ github.event.inputs.image }},version=${{ github.event.inputs.version }}
+          VAR: image=${{ github.event.inputs.image }}
 
       - name: Create deployment tag
         if: success()
@@ -99,5 +95,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           TAG_NAME="prod-$(date -u +'%Y.%m.%d-%H%M%S')"
-          git tag -a "$TAG_NAME" -m "Production deployment of ${{ github.event.inputs.version }}"
+          git tag -a "$TAG_NAME" -m "Production deployment of ${{ github.event.inputs.image }}"
           git push origin "$TAG_NAME"
