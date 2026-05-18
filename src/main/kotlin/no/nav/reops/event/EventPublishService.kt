@@ -18,6 +18,8 @@ const val USER_AGENT = "user-agent"
 const val OPT_OUT_FILTERS = "x-opt-out-filters"
 const val FORWARDED_FOR = "x-forwarded-for"
 const val SCRIPT_VERSION = "x-script-version"
+const val SESSION_ID_HEADER = "x-reops-session-id"
+const val VISIT_ID_HEADER = "x-reops-visit-id"
 
 @Service
 class EventPublishService(
@@ -31,7 +33,12 @@ class EventPublishService(
     private val objectMapper = jacksonObjectMapper()
 
     fun publishEventAsync(
-        event: Event, userAgent: String, optOutFilters: List<OptOutFilter>?, forwardedFor: String?
+        event: Event,
+        userAgent: String,
+        optOutFilters: List<OptOutFilter>?,
+        forwardedFor: String?,
+        sessionId: UUID,
+        visitId: UUID
     ): CompletableFuture<SendResult<String, Event>> {
         val key = ThreadLocalRandom.current().let { UUID(it.nextLong(), it.nextLong()) }.toString()
         val record = ProducerRecord(topic, key, event).apply {
@@ -40,6 +47,8 @@ class EventPublishService(
             optOutFilters?.takeIf { it.isNotEmpty() }?.let {
                 headers().add(OPT_OUT_FILTERS, objectMapper.writeValueAsBytes(it))
             }
+            headers().add(SESSION_ID_HEADER, sessionId.toString().toByteArray(UTF_8))
+            headers().add(VISIT_ID_HEADER, visitId.toString().toByteArray(UTF_8))
         }
 
         return runCatching {

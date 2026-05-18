@@ -18,6 +18,7 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
 import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.nio.charset.StandardCharsets.UTF_8
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 
 class EventPublishServiceTest {
@@ -49,6 +50,8 @@ class EventPublishServiceTest {
             userAgent = userAgent,
             optOutFilters = excludeFilters,
             forwardedFor = forwardedFor,
+            sessionId = UUID.randomUUID(),
+            visitId = UUID.randomUUID()
         )
 
         verify(kafkaTemplate, times(1)).send(recordCaptor.capture())
@@ -108,6 +111,8 @@ class EventPublishServiceTest {
             userAgent = userAgent,
             optOutFilters = excludeFilters,
             forwardedFor = forwardedFor,
+            sessionId = UUID.randomUUID(),
+            visitId = UUID.randomUUID()
         )
 
         sendFuture.completeExceptionally(IllegalStateException("boom"))
