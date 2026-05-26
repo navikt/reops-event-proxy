@@ -46,6 +46,7 @@ spec:
     inbound:
       rules:
         - application: umami-proxy
+        - application: reops-gatus
     outbound:
       external:
         - host: nav-prod-kafka-nav-prod.aivencloud.com
