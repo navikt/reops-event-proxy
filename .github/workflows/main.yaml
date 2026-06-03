@@ -19,7 +19,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
       - name: JDK
         uses: actions/setup-java@v5
         with:
@@ -43,7 +43,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
       - name: Build and push
         id: docker-build-push
         uses: nais/docker-build-push@v0
@@ -67,7 +67,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
       - name: Deploy analytics-raw to dev
         uses: nais/deploy/actions/deploy@v2
         env:
@@ -96,7 +96,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
       - name: Deploy alerts to Dev
         uses: nais/deploy/actions/deploy@v2
         env:
@@ -111,7 +111,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
       - name: Deploy kafka-manager to Dev
         uses: nais/deploy/actions/deploy@v2
         env:
@@ -127,7 +127,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
       - name: Deploy application to Dev
         uses: nais/deploy/actions/deploy@v2
         env:
