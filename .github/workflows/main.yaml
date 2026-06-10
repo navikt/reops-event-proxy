@@ -27,7 +27,7 @@ jobs:
           java-version: '25'
           cache: gradle
       - name: Setup gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@v6.1.0
         with:
           dependency-graph: generate-and-submit
       - name: Build and test
