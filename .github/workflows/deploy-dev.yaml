@@ -117,7 +117,6 @@ jobs:
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/ui/kafka-manager-dev.yaml
-          VAR: image=${{ needs.docker.outputs.image }}
 
   deploy-application-dev:
     needs: [test, docker, deploy-kafka-dev]

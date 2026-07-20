@@ -71,7 +71,6 @@ jobs:
         env:
           CLUSTER: prod-gcp
           RESOURCE: .nais/ui/kafka-manager-prod.yaml
-          VAR: image=${{ github.event.inputs.image }}
 
   deploy-application-prod:
     needs: [deploy-kafka-prod]
