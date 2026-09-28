@@ -1,11 +1,11 @@
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 
 plugins {
-	id("org.springframework.boot") version "4.1.0"
+	id("org.springframework.boot") version "4.1.1"
 	id("io.spring.dependency-management") version "1.1.7"
-	id("org.graalvm.buildtools.native") version "1.1.5"
-	kotlin("jvm") version "2.4.10"
-	kotlin("plugin.spring") version "2.4.10"
+	id("org.graalvm.buildtools.native") version "1.1.14"
+	kotlin("jvm") version "2.4.20"
+	kotlin("plugin.spring") version "2.4.20"
 }
 
 group = "no.nav.reops"
@@ -39,14 +39,14 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
 	implementation("org.springframework.boot:spring-boot-starter-kafka")
-	implementation("at.yawk.lz4:lz4-java:1.11.1")
+	implementation("at.yawk.lz4:lz4-java:1.11.3")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("io.micrometer:micrometer-registry-prometheus")
 	implementation("io.micrometer:micrometer-tracing-bridge-otel")
 	implementation("io.opentelemetry:opentelemetry-exporter-otlp")
 	implementation("org.springframework.boot:spring-boot-starter-opentelemetry")
 
-	implementation("com.auth0:java-jwt:4.5.1")
+	implementation("com.auth0:java-jwt:4.6.1")
 	implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
@@ -54,7 +54,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
 
 	testImplementation("org.springframework.kafka:spring-kafka-test")
-	testImplementation("org.mockito.kotlin:mockito-kotlin:6.3.0")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:6.4.0")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 }
 
