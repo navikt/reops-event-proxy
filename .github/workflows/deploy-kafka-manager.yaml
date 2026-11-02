@@ -1,0 +1,68 @@
+name: "Deploy kafka-manager"
+run-name: "Deploy kafka-manager (latest upstream release)"
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * *"
+  push:
+    branches:
+      - main
+    paths:
+      - '.nais/ui/**'
+      - '.github/workflows/deploy-kafka-manager.yaml'
+
+concurrency:
+  group: deploy-kafka-manager
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    name: "resolve latest image tag"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.latest.outputs.tag }}
+    steps:
+      - name: Find latest navikt/kafka-manager release
+        id: latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh api repos/navikt/kafka-manager/releases/latest --jq .tag_name)
+          [[ "$tag" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}-[0-9]{2}\.[0-9]{2}-[0-9a-f]{7}$ ]] || { echo "Unexpected tag: $tag"; exit 1; }
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Deploying kafka-manager:$tag"
+
+  deploy-dev:
+    needs: [resolve]
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Deploy kafka-manager to Dev
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/ui/kafka-manager-dev.yaml
+          VAR: tag=${{ needs.resolve.outputs.tag }}
+
+  deploy-prod:
+    needs: [resolve, deploy-dev]
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Deploy kafka-manager to Prod
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/ui/kafka-manager-prod.yaml
+          VAR: tag=${{ needs.resolve.outputs.tag }}

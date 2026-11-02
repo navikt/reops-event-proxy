@@ -6,7 +6,7 @@ metadata:
   labels:
     team: team-researchops
 spec:
-  image: europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:2026.07.08-13.28-c1222c5
+  image: europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:{{ tag }}
   port: 8080
   webproxy: true
   ingresses:

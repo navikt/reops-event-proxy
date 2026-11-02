@@ -20,6 +20,7 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker
 import org.springframework.kafka.test.context.EmbeddedKafka
 import org.springframework.kafka.test.utils.ContainerTestUtils
 import org.springframework.kafka.test.utils.KafkaTestUtils
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import tools.jackson.module.kotlin.jacksonObjectMapper
@@ -29,6 +30,7 @@ import java.util.UUID
 import kotlin.uuid.Uuid
 
 @ActiveProfiles("test")
+@DirtiesContext
 @EmbeddedKafka(partitions = 1, topics = ["test-topic"])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class EndeTilEndeTest {

@@ -57,21 +57,6 @@ jobs:
           CLUSTER: prod-gcp
           RESOURCE: .nais/alerts/total-request-fails.yaml
 
-  deploy-kafka-manager-prod:
-    needs: [deploy-kafka-prod]
-    runs-on: ubuntu-latest
-    environment: prod
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v7
-      - name: Deploy kafka-manager to Prod
-        uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/ui/kafka-manager-prod.yaml
-
   deploy-application-prod:
     needs: [deploy-kafka-prod]
     runs-on: ubuntu-latest
