@@ -1,6 +1,13 @@
 # reops-event-proxy
 Receives insight events over HTTP and publishes them to Kafka.
 
+## Redaction opt-outs
+The optional `X-Opt-Out-Filters` HTTP header accepts the comma-separated tokens
+`uuid` and `name`, for example `uuid,name`. The proxy forwards recognized tokens
+as a JSON array in the `x-opt-out-filters` Kafka header. The `name` token disables
+the downstream `PROXY-NAME` rule for the event, not just its `name` field.
+Other redaction rules still apply; assess whether retaining names is appropriate.
+
 ## Prerequisites
 - Java 25
 
