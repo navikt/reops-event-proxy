@@ -21,6 +21,7 @@ class OptOutFilterTest {
     @Test
     fun `parseHeader parses single known filter`() {
         assertEquals(listOf(OptOutFilter.UUID), OptOutFilter.parseHeader("uuid"))
+        assertEquals(listOf(OptOutFilter.NAME), OptOutFilter.parseHeader("name"))
     }
 
     @Test
@@ -45,6 +46,18 @@ class OptOutFilterTest {
     }
 
     @Test
+    fun `parseHeader handles combined filters with case whitespace duplicates and unknown tokens`() {
+        assertEquals(
+            listOf(OptOutFilter.UUID, OptOutFilter.NAME),
+            OptOutFilter.parseHeader(" UUID, Name,unknown,uuid,NAME ")
+        )
+        assertEquals(
+            listOf(OptOutFilter.NAME, OptOutFilter.UUID),
+            OptOutFilter.parseHeader("name,uuid")
+        )
+    }
+
+    @Test
     fun `parseHeader returns null when all tokens are unknown`() {
         assertNull(OptOutFilter.parseHeader("unknown,other"))
     }
@@ -64,4 +77,3 @@ class OptOutFilterTest {
         assertNull(OptOutFilter.parseHeader(value))
     }
 }
-

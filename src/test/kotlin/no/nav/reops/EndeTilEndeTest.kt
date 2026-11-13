@@ -1,6 +1,7 @@
 package no.nav.reops
 
 import no.nav.reops.event.Event
+import no.nav.reops.event.OPT_OUT_FILTERS
 import no.nav.reops.event.USER_AGENT
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -8,6 +9,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -58,8 +60,8 @@ class EndeTilEndeTest {
     fun `skal kunne publiserer hendelse på kafka`() {
         val topic = "test-topic"
 
-        val consumerProps = KafkaTestUtils.consumerProps(embeddedKafka, "e2e-consumer", true).toMutableMap()
-        consumerProps[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+        val consumerProps = KafkaTestUtils.consumerProps(embeddedKafka, "e2e-${UUID.randomUUID()}", true).toMutableMap()
+        consumerProps[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
         consumerProps[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
         consumerProps[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = JacksonJsonDeserializer::class.java
         consumerProps[JacksonJsonDeserializer.TRUSTED_PACKAGES] = "*"
@@ -68,6 +70,8 @@ class EndeTilEndeTest {
         val consumer = KafkaConsumer<String, Event>(consumerProps)
         consumer.use { c ->
             embeddedKafka.consumeFromAnEmbeddedTopic(c, topic)
+            c.seekToEnd(c.assignment())
+            c.assignment().forEach { c.position(it) }
 
             val event = Event(
                 type = "pageview", payload = Event.Payload(
@@ -95,6 +99,57 @@ class EndeTilEndeTest {
             assertNotNull(uaHeader)
             assertEquals(userAgent, uaHeader.value().toString(StandardCharsets.UTF_8))
         }
+    }
+
+    @Test
+    fun `opt out headers are parsed from HTTP and serialized to Kafka`() {
+        val topic = "test-topic"
+        val consumerProps = KafkaTestUtils.consumerProps(embeddedKafka, "opt-out-${UUID.randomUUID()}", true).toMutableMap()
+        consumerProps[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
+        consumerProps[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
+        consumerProps[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = JacksonJsonDeserializer::class.java
+        consumerProps[JacksonJsonDeserializer.TRUSTED_PACKAGES] = "*"
+        consumerProps[JacksonJsonDeserializer.VALUE_DEFAULT_TYPE] = Event::class.java.name
+
+        KafkaConsumer<String, Event>(consumerProps).use { consumer ->
+            embeddedKafka.consumeFromAnEmbeddedTopic(consumer, topic)
+            consumer.seekToEnd(consumer.assignment())
+            consumer.assignment().forEach { consumer.position(it) }
+
+            val event = Event(type = "pageview", payload = Event.Payload(website = UUID.randomUUID()))
+            val cases = listOf(
+                Triple("name", MediaType.APPLICATION_JSON, "[\"name\"]"),
+                Triple("UUID, Name,unknown,uuid,NAME", MediaType.TEXT_PLAIN, "[\"uuid\",\"name\"]"),
+                Triple("unknown", MediaType.APPLICATION_JSON, null)
+            )
+
+            for ((input, contentType, expectedHeader) in cases) {
+                val body: Any = if (contentType == MediaType.TEXT_PLAIN) jacksonObjectMapper().writeValueAsString(event) else event
+                webTestClient().post().uri("/api/send").contentType(contentType)
+                    .header(USER_AGENT, "JUnit/5").header(OPT_OUT_FILTERS, input)
+                    .bodyValue(body).exchange().expectStatus().isCreated
+
+                val record = KafkaTestUtils.getSingleRecord(consumer, topic, Duration.ofSeconds(10))
+                assertEquals(event, record.value())
+                val header = record.headers().lastHeader(OPT_OUT_FILTERS)
+                if (expectedHeader == null) {
+                    assertNull(header)
+                } else {
+                    assertNotNull(header)
+                    assertEquals(expectedHeader, header.value().toString(StandardCharsets.UTF_8))
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `opt out header exceeding length limit is rejected`() {
+        val event = Event(type = "pageview", payload = Event.Payload(website = UUID.randomUUID()))
+        webTestClient().post().uri("/api/send").contentType(MediaType.APPLICATION_JSON)
+            .header(USER_AGENT, "JUnit/5")
+            .header(OPT_OUT_FILTERS, "name," + "x".repeat(46))
+            .bodyValue(event).exchange().expectStatus().isBadRequest
+            .expectBody().jsonPath("$.error").isEqualTo("BAD_REQUEST")
     }
 
     @Test
