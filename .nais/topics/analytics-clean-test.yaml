@@ -1,0 +1,74 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: analytics-test-clean
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+spec:
+  pool: nav-dev
+  config:
+    cleanupPolicy: delete
+    minimumInSyncReplicas: 1
+    partitions: 4
+    retentionHours: 1
+  acl:
+    - team: team-researchops
+      application: reops-raw-to-clean-test
+      access: write
+    - team: team-researchops
+      application: reops-clean-to-enriched-test
+      access: read
+    - team: team-researchops
+      application: reops-kafka-manager
+      access: readwrite
+---
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: analytics-test-clean-retry
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+spec:
+  pool: nav-dev
+  config:
+    cleanupPolicy: delete
+    minimumInSyncReplicas: 1
+    partitions: 1
+    retentionHours: 2
+  acl:
+    - team: team-researchops
+      application: reops-clean-to-enriched-test
+      access: readwrite
+    - team: team-researchops
+      application: reops-kafka-manager
+      access: readwrite
+---
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: analytics-test-clean-dlt
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+  annotations:
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+spec:
+  pool: nav-dev
+  config:
+    cleanupPolicy: delete
+    minimumInSyncReplicas: 1
+    partitions: 1
+    retentionHours: 168
+  acl:
+    - team: team-researchops
+      application: reops-clean-to-enriched-test
+      access: readwrite
+    - team: team-researchops
+      application: reops-kafka-manager
+      access: readwrite
