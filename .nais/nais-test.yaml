@@ -1,0 +1,60 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: reops-event-proxy-test
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+spec:
+  image: "{{ image }}"
+  port: 8080
+  startup:
+    path: /internal/health
+    initialDelay: 5
+    periodSeconds: 2
+    failureThreshold: 30
+  liveness:
+    path: /internal/health
+    periodSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /internal/health
+    periodSeconds: 5
+    failureThreshold: 3
+  replicas:
+    min: 1
+    max: 1
+  ingresses:
+    - "https://reops-event-proxy-test.intern.dev.nav.no"
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: sdk
+  prometheus:
+    enabled: true
+    path: /internal/prometheus
+  resources:
+    limits:
+      memory: 256Mi
+    requests:
+      cpu: "300m"
+      memory: 124Mi
+  kafka:
+    pool: nav-dev
+  accessPolicy:
+    outbound:
+      external:
+        - host: nav-dev-kafka-nav-dev.aivencloud.com
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: kubernetes
+    - name: SPRING_KAFKA_TOPIC
+      value: team-researchops.analytics-test-raw
+    - name: JAVA_TOOL_OPTIONS
+      value: >-
+        -XX:+UseZGC
+        -XX:MaxRAMPercentage=70
+        -XX:InitialRAMPercentage=50
+        -XX:+ExitOnOutOfMemoryError
+  envFrom:
+    - secret: reops-event-proxy-test
